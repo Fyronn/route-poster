@@ -1,0 +1,58 @@
+import type { Notification } from "../types/notification.types";
+
+export const notificationsMockData: Notification[] = [
+  {
+    id: "NOT-001",
+    title: "Trip Delay Alert",
+    message: "TRP-002 (University Loop) is running 3 minutes behind schedule",
+    timeAgo: "5 minutes ago",
+    type: "warning",
+    isUnread: true,
+    isUrgent: true,
+  },
+  {
+    id: "NOT-002",
+    title: "Route Change Request",
+    message: "New route change request from TechCorp Inc. requires approval",
+    timeAgo: "1 hour ago",
+    type: "info",
+    isUnread: true,
+    isUrgent: false,
+  },
+  {
+    id: "NOT-003",
+    title: "Trip Completed",
+    message: "TRP-003 (Industrial Zone - Mall) completed successfully with 31 riders",
+    timeAgo: "2 hours ago",
+    type: "success",
+    isUnread: true,
+    isUrgent: false,
+  },
+  {
+    id: "NOT-004",
+    title: "Vehicle Maintenance Due",
+    message: "BUS-156 requires scheduled maintenance within 3 days",
+    timeAgo: "3 hours ago",
+    type: "error",
+    isUnread: false,
+    isUrgent: true,
+  },
+  {
+    id: "NOT-005",
+    title: "Driver License Expiring",
+    message: "Mike Davis (DRV-003) license expires in 7 months",
+    timeAgo: "5 hours ago",
+    type: "info",
+    isUnread: false,
+    isUrgent: false,
+  },
+  {
+    id: "NOT-006",
+    title: "New Client Onboarded",
+    message: "Lincoln School District has been added as a new client",
+    timeAgo: "1 day ago",
+    type: "success",
+    isUnread: false,
+    isUrgent: false,
+  },
+];
