@@ -1,10 +1,38 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using RoutePoster.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "SUPER_SECRET_KEY_THAT_IS_LONG_ENOUGH_12345");
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 builder.Services.AddControllers();
 
@@ -37,6 +65,7 @@ builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IRouteReq
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.ITripService, RoutePoster.Application.Services.TripService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IVehicleService, RoutePoster.Application.Services.VehicleService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IDriverService, RoutePoster.Application.Services.DriverService>();
+builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IAuthService, RoutePoster.Application.Services.AuthService>();
 
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
@@ -54,6 +83,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
