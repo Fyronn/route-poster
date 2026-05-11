@@ -1,14 +1,12 @@
 import {
-  BarChart3,
-  Bell,
   Building2,
-  Bus,
   Calendar,
-  FileText,
+  CheckSquare,
+  ClipboardList,
   LayoutDashboard,
   MapPin,
   Route,
-  Settings,
+  Send,
   Users,
 } from "lucide-react";
 
@@ -18,59 +16,49 @@ export const adminSidebarItems = [
     href: "/admin",
     icon: LayoutDashboard,
   },
-  /* {
-    label: "Live Operations",
-    href: "/admin/live-operations",
-    icon: MapPin,
-  } */,
-  {
-    label: "Trips",
-    href: "/admin/trips",
-    icon: Calendar,
-  },
   {
     label: "Clients",
     href: "/admin/clients",
     icon: Building2,
   },
   {
-    label: "Vehicles",
-    href: "/admin/vehicles",
-    icon: Bus,
-  },
-  {
-    label: "Drivers",
-    href: "/admin/drivers",
+    label: "Employees",
+    href: "/admin/corporate-shuttle/employees",
     icon: Users,
   },
   {
-    label: "Routes",
+    label: "Stops",
+    href: "/admin/corporate-shuttle/stops",
+    icon: MapPin,
+  },
+  {
+    label: "Route Requests",
+    href: "/admin/corporate-shuttle/route-requests",
+    icon: Route,
+  },
+  {
+    label: "Shuttle Plan",
+    href: "/admin/corporate-shuttle/shuttle-plan",
+    icon: ClipboardList,
+  },
+  {
+    label: "Plan Requests",
+    href: "/admin/shuttle-plan-requests",
+    icon: Send,
+  },
+  {
+    label: "Route Approvals",
+    href: "/admin/route-request-approvals",
+    icon: CheckSquare,
+  },
+  {
+    label: "Service Routes",
     href: "/admin/service-routes",
     icon: Route,
   },
   {
-    label: "Riders",
-    href: "/admin/riders",
-    icon: Users,
-  },
-  {
-    label: "Change Requests",
-    href: "/admin/change-requests",
-    icon: FileText,
-  },
-  {
-    label: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
-  },
-  {
-    label: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    label: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
+    label: "Trips",
+    href: "/admin/trips",
+    icon: Calendar,
   },
 ];
