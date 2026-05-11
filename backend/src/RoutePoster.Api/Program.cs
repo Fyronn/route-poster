@@ -8,6 +8,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+});
+
 // Repositories
 builder.Services.AddScoped(typeof(RoutePoster.Domain.Interfaces.IGenericRepository<>), typeof(RoutePoster.Infrastructure.Repositories.GenericRepository<>));
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IClientRepository, RoutePoster.Infrastructure.Repositories.ClientRepository>();
@@ -40,6 +52,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
