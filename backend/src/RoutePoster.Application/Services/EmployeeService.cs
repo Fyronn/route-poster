@@ -18,9 +18,9 @@ namespace RoutePoster.Application.Services
             _employeeRepository = employeeRepository;
         }
 
-        public async Task<IEnumerable<EmployeeDto>> GetByClientIdAsync(int clientId)
+        public async Task<IEnumerable<EmployeeDto>> GetByKurumIdAsync(int kurumId)
         {
-            var entities = await _employeeRepository.FindAsync(e => e.KurumId == clientId);
+            var entities = await _employeeRepository.FindAsync(e => e.KurumId == kurumId);
             return entities.Select(MapToDto);
         }
 

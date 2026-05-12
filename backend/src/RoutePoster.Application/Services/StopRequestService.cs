@@ -17,6 +17,12 @@ namespace RoutePoster.Application.Services
             _stopRequestRepository = stopRequestRepository;
         }
 
+        public async Task<IEnumerable<StopRequestDto>> GetByKurumIdAsync(int kurumId)
+        {
+            var entities = await _stopRequestRepository.FindAsync(s => s.KurumId == kurumId);
+            return entities.Select(MapToDto);
+        }
+
         public async Task<IEnumerable<StopRequestDto>> GetByClientIdAsync(int clientId)
         {
             var entities = await _stopRequestRepository.FindAsync(s => s.KurumId == clientId);

@@ -24,6 +24,13 @@ namespace RoutePoster.Api.Controllers
             return Ok(stops);
         }
 
+        [HttpGet("kurum/{kurumId}")]
+        public async Task<ActionResult<IEnumerable<StopRequestDto>>> GetByKurumId(int kurumId)
+        {
+            var stops = await _stopRequestService.GetByKurumIdAsync(kurumId);
+            return Ok(stops);
+        }
+
         [HttpPost]
         public async Task<ActionResult<StopRequestDto>> Create(int clientId, [FromBody] CreateStopRequestDto dto)
         {

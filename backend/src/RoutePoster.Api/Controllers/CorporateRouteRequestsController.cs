@@ -24,6 +24,13 @@ namespace RoutePoster.Api.Controllers
             return Ok(routeRequests);
         }
 
+        [HttpGet("kurum/{kurumId}")]
+        public async Task<ActionResult<IEnumerable<RouteRequestDto>>> GetByKurumId(int kurumId)
+        {
+            var routeRequests = await _routeRequestService.GetByKurumIdAsync(kurumId);
+            return Ok(routeRequests);
+        }
+
         [HttpPost]
         public async Task<ActionResult<RouteRequestDto>> Create(int clientId, [FromBody] CreateRouteRequestDto dto)
         {

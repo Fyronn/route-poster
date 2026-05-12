@@ -7,6 +7,7 @@ namespace RoutePoster.Application.Services.Interfaces
     public interface ITripService
     {
         Task<IEnumerable<TripDto>> GetAllAsync();
+        Task<IEnumerable<TripDto>> GetByKurumIdAsync(int kurumId);
         Task<IEnumerable<TripDto>> GetByRouteIdAsync(int routeId);
         Task<TripDto> CreateAsync(CreateTripDto dto);
     }

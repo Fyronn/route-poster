@@ -24,6 +24,13 @@ namespace RoutePoster.Api.Controllers
             return Ok(drivers);
         }
 
+        [HttpGet("kurum/{kurumId}")]
+        public async Task<ActionResult<IEnumerable<DriverDto>>> GetByKurumId(int kurumId)
+        {
+            var drivers = await _driverService.GetByKurumIdAsync(kurumId);
+            return Ok(drivers);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<DriverDto>> GetById(int id)
         {

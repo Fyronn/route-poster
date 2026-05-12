@@ -7,6 +7,7 @@ namespace RoutePoster.Application.Services.Interfaces
     public interface IDriverService
     {
         Task<IEnumerable<DriverDto>> GetAllAsync();
+        Task<IEnumerable<DriverDto>> GetByKurumIdAsync(int kurumId);
         Task<DriverDto?> GetByIdAsync(int id);
         Task<DriverDto> CreateAsync(CreateDriverDto dto);
         Task UpdateAsync(int id, UpdateDriverDto dto);

@@ -22,6 +22,12 @@ namespace RoutePoster.Application.Services
             var entities = await _tripRepository.GetAllAsync();
             return entities.Select(MapToDto);
         }
+
+        public async Task<IEnumerable<TripDto>> GetByKurumIdAsync(int kurumId)
+        {
+            var entities = await _tripRepository.FindAsync(t => t.Rota != null && t.Rota.KurumId == kurumId);
+            return entities.Select(MapToDto);
+        }
         
         public async Task<IEnumerable<TripDto>> GetByRouteIdAsync(int routeId)
         {

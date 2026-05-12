@@ -20,7 +20,14 @@ namespace RoutePoster.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetByClientId(int clientId)
         {
-            var employees = await _employeeService.GetByClientIdAsync(clientId);
+            var employees = await _employeeService.GetByKurumIdAsync(clientId);
+            return Ok(employees);
+        }
+
+        [HttpGet("kurum/{kurumId}")]
+        public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetByKurumId(int kurumId)
+        {
+            var employees = await _employeeService.GetByKurumIdAsync(kurumId);
             return Ok(employees);
         }
 

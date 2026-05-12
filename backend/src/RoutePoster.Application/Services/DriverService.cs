@@ -25,6 +25,12 @@ namespace RoutePoster.Application.Services
             return entities.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<DriverDto>> GetByKurumIdAsync(int kurumId)
+        {
+            var entities = await _employeeRepository.FindAsync(e => e.RolId == DriverRoleId && e.KurumId == kurumId);
+            return entities.Select(MapToDto);
+        }
+
         public async Task<DriverDto?> GetByIdAsync(int id)
         {
             var entity = await _employeeRepository.GetByIdAsync(id);

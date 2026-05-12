@@ -24,6 +24,12 @@ namespace RoutePoster.Application.Services
             return entities.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<RouteRequestDto>> GetByKurumIdAsync(int kurumId)
+        {
+            var entities = await _routeRequestRepository.FindAsync(r => r.KurumId == kurumId);
+            return entities.Select(MapToDto);
+        }
+
         public async Task<IEnumerable<RouteRequestDto>> GetByClientIdAsync(int clientId)
         {
             var entities = await _routeRequestRepository.FindAsync(r => r.KurumId == clientId);

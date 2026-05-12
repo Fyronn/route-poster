@@ -6,7 +6,7 @@ namespace RoutePoster.Application.Services.Interfaces
 {
     public interface IEmployeeService
     {
-        Task<IEnumerable<EmployeeDto>> GetByClientIdAsync(int clientId);
+        Task<IEnumerable<EmployeeDto>> GetByKurumIdAsync(int kurumId);
         Task<EmployeeDto?> GetByIdAsync(int id);
         Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto);
     }
