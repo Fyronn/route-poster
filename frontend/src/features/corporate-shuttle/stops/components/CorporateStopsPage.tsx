@@ -70,8 +70,10 @@ function InputField({
 }
 
 export function CorporateStopsPage({
+  clientId,
   stops,
 }: {
+  clientId: number;
   stops: CorporateStopRequest[];
 }) {
   const [items, setItems] = useState(stops);
@@ -90,7 +92,7 @@ export function CorporateStopsPage({
     setIsSubmitting(true);
 
     try {
-      const createdStop = await createCorporateStop(1, {
+      const createdStop = await createCorporateStop(clientId, {
         address: form.address,
         latitude: form.latitude ? Number(form.latitude) : undefined,
         longitude: form.longitude ? Number(form.longitude) : undefined,

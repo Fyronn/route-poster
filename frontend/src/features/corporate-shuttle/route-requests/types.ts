@@ -35,10 +35,18 @@ export type CorporateRouteRequest = {
   employeeCount: number;
   estimatedDistanceKm: number;
   estimatedDurationMin: number;
+  plannedStops?: RouteRequestStopPlan[];
   status:
     | "requested"
     | "submitted"
     | "approved"
     | "rejected"
     | "revision_requested";
+};
+
+export type RouteRequestStopPlan = {
+  stopId: number;
+  stopName: string;
+  sequence: number;
+  estimatedArrivalTime?: string;
 };

@@ -15,6 +15,7 @@ export type TripDto = {
 
 export type Trip = {
   id: number;
+  routeId: number | null;
   date: string;
   time: string;
   routeName: string;

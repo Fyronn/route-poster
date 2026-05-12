@@ -15,9 +15,11 @@ import type { SelectOption, SetupModel, TransportType } from "@/types/common";
 
 export const defaultClientFormValues: CreateClientFormValues = {
   companyName: "",
-  contactName: "",
+  contactFirstName: "",
+  contactLastName: "",
   phone: "",
   email: "",
+  password: "",
   address: "",
   city: "",
   district: "",

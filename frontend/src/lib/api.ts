@@ -1,9 +1,13 @@
+import { AUTH_TOKEN_STORAGE_KEY } from "@/features/auth/constants";
+
 const DEFAULT_API_BASE_URL = "http://192.168.1.40:5000";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL;
 
 type ApiRequestOptions = RequestInit & {
+  authToken?: string | null;
+  skipAuth?: boolean;
   timeoutMs?: number;
 };
 
@@ -24,18 +28,31 @@ async function apiRequest<T>(
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const requestUrl = `${API_BASE_URL}${normalizedPath}`;
   const controller = new AbortController();
+  const { authToken, headers, skipAuth, timeoutMs, ...fetchOptions } = options;
   const timeout = setTimeout(
     () => controller.abort(),
-    options.timeoutMs ?? 10000,
+    timeoutMs ?? 10000,
   );
 
   try {
+    const requestHeaders = new Headers(headers);
+
+    if (!requestHeaders.has("Content-Type")) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
+
+    const token =
+      skipAuth === true
+        ? null
+        : authToken ?? getBrowserAuthToken();
+
+    if (token) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
+
     const response = await fetch(requestUrl, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      ...fetchOptions,
+      headers: requestHeaders,
       signal: controller.signal,
     });
 
@@ -55,6 +72,11 @@ async function apiRequest<T>(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function getBrowserAuthToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function getRequest<T>(path: string, options?: ApiRequestOptions) {

@@ -7,9 +7,16 @@ import type { RouteRequestDto } from "@/features/corporate-shuttle/route-request
 import { routeRequestApprovalsMockData } from "../constants";
 import type { RouteRequestApproval } from "../types";
 
-export async function getRouteRequestApprovals() {
+type ServiceOptions = {
+  authToken?: string | null;
+};
+
+export async function getRouteRequestApprovals(options: ServiceOptions = {}) {
   try {
-    const requests = await getRequest<RouteRequestDto[]>("/api/shuttle-plan-requests");
+    const requests = await getRequest<RouteRequestDto[]>(
+      "/api/shuttle-plan-requests",
+      { authToken: options.authToken },
+    );
     return requests.map<RouteRequestApproval>((request) => ({
       ...mapRouteRequestDto(request),
       requestedBy: "Şirket yöneticisi",

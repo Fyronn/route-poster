@@ -3,6 +3,10 @@ import { getRequest, postRequest } from "@/lib/api";
 import { corporateStopsMockData } from "../constants";
 import type { CorporateStopRequest, StopRequestDto } from "../types";
 
+type ServiceOptions = {
+  authToken?: string | null;
+};
+
 function mapStatus(status?: string | null): CorporateStopRequest["status"] {
   if (status === "Onaylandi" || status === "Onaylandı") return "approved";
   if (status === "Reddedildi") return "rejected";
@@ -32,10 +36,14 @@ export function mapStopDto(dto: StopRequestDto): CorporateStopRequest {
   };
 }
 
-export async function getCorporateStops(clientId = 1) {
+export async function getCorporateStops(
+  clientId = 1,
+  options: ServiceOptions = {},
+) {
   try {
     const stops = await getRequest<StopRequestDto[]>(
       `/api/corporate-shuttle/clients/${clientId}/stops`,
+      { authToken: options.authToken },
     );
     return stops.map(mapStopDto);
   } catch {
@@ -56,6 +64,7 @@ export async function createCorporateStop(
   const stop = await postRequest<StopRequestDto>(
     `/api/corporate-shuttle/clients/${clientId}/stops`,
     {
+      kurumId: clientId,
       durakAdi: payload.stopName,
       adres: payload.address,
       enlem: payload.latitude,
