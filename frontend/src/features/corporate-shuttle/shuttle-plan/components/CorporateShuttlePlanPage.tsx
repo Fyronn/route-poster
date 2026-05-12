@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Eye, Route, Send, Users, MapPin } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -7,13 +10,39 @@ import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDate } from "@/lib/utils";
 
+import { submitCorporateShuttlePlan } from "../services/shuttle-plan.service";
 import type { ShuttlePlanSummary } from "../types";
 
 export function CorporateShuttlePlanPage({
+  clientId,
   plan,
 }: {
+  clientId: number;
   plan: ShuttlePlanSummary;
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmitPlan() {
+    setError(null);
+    setMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      await submitCorporateShuttlePlan(clientId);
+      setMessage("Servis plani ABC Turizm onayina gonderildi.");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Servis plani gonderilemedi.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <PageSection
       action={
@@ -22,7 +51,7 @@ export function CorporateShuttlePlanPage({
             <Eye className="h-4 w-4" />
             Planı İncele
           </Button>
-          <Button>
+          <Button disabled={isSubmitting} onClick={handleSubmitPlan}>
             <Send className="h-4 w-4" />
             ABC Turizm&apos;e Gönder
           </Button>
@@ -32,6 +61,17 @@ export function CorporateShuttlePlanPage({
       eyebrow="Corporate Shuttle"
       title="Shuttle Plan"
     >
+      {message ? (
+        <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          {message}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {error}
+        </div>
+      ) : null}
+
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <MetricCard
           hint="Plan kapsamındaki çalışan"

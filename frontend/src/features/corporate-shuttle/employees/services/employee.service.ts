@@ -3,6 +3,10 @@ import { getRequest, postRequest } from "@/lib/api";
 import { corporateEmployeesMockData } from "../constants";
 import type { CorporateEmployee, EmployeeDto } from "../types";
 
+type ServiceOptions = {
+  authToken?: string | null;
+};
+
 export function mapEmployeeDto(dto: EmployeeDto): CorporateEmployee {
   const firstName = dto.Ad ?? dto.ad ?? "";
   const lastName = dto.Soyad ?? dto.soyad ?? "";
@@ -19,10 +23,14 @@ export function mapEmployeeDto(dto: EmployeeDto): CorporateEmployee {
   };
 }
 
-export async function getCorporateEmployees(clientId = 1) {
+export async function getCorporateEmployees(
+  clientId = 1,
+  options: ServiceOptions = {},
+) {
   try {
     const employees = await getRequest<EmployeeDto[]>(
       `/api/corporate-shuttle/clients/${clientId}/employees`,
+      { authToken: options.authToken },
     );
     return employees.map(mapEmployeeDto);
   } catch {
@@ -43,6 +51,7 @@ export async function createCorporateEmployee(
   const employee = await postRequest<EmployeeDto>(
     `/api/corporate-shuttle/clients/${clientId}/employees`,
     {
+      kurumId: clientId,
       ad: payload.firstName,
       soyad: payload.lastName,
       email: payload.email,

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Plus, Route } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Route, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,9 +10,10 @@ import { Modal } from "@/components/shared/Modal";
 import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
+import type { CorporateStopRequest } from "@/features/corporate-shuttle/stops/types";
 
 import { createCorporateRouteRequest } from "../services/route-request.service";
-import type { CorporateRouteRequest } from "../types";
+import type { CorporateRouteRequest, RouteRequestStopPlan } from "../types";
 
 type RouteRequestFormState = {
   direction: string;
@@ -91,13 +92,22 @@ function SelectField({
   );
 }
 
+function normalizeStopPlan(plan: RouteRequestStopPlan[]) {
+  return plan.map((stop, index) => ({ ...stop, sequence: index + 1 }));
+}
+
 export function CorporateRouteRequestsPage({
+  clientId,
   requests,
+  stops,
 }: {
+  clientId: number;
   requests: CorporateRouteRequest[];
+  stops: CorporateStopRequest[];
 }) {
   const [items, setItems] = useState(requests);
   const [form, setForm] = useState(emptyForm);
+  const [stopPlan, setStopPlan] = useState<RouteRequestStopPlan[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,15 +116,64 @@ export function CorporateRouteRequestsPage({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function addStop(stop: CorporateStopRequest) {
+    setStopPlan((current) => {
+      if (current.some((item) => item.stopId === stop.id)) return current;
+
+      return [
+        ...current,
+        {
+          sequence: current.length + 1,
+          stopId: stop.id,
+          stopName: stop.stopName,
+        },
+      ];
+    });
+  }
+
+  function removeStop(stopId: number) {
+    setStopPlan((current) =>
+      normalizeStopPlan(current.filter((stop) => stop.stopId !== stopId)),
+    );
+  }
+
+  function moveStop(stopId: number, direction: "up" | "down") {
+    setStopPlan((current) => {
+      const index = current.findIndex((stop) => stop.stopId === stopId);
+      const nextIndex = direction === "up" ? index - 1 : index + 1;
+
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) {
+        return current;
+      }
+
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return normalizeStopPlan(next);
+    });
+  }
+
+  function updateStopTime(stopId: number, estimatedArrivalTime: string) {
+    setStopPlan((current) =>
+      current.map((stop) =>
+        stop.stopId === stopId ? { ...stop, estimatedArrivalTime } : stop,
+      ),
+    );
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
     try {
-      const createdRequest = await createCorporateRouteRequest(1, {
+      if (stopPlan.length === 0) {
+        throw new Error("Rota talebi icin en az bir durak secmelisiniz.");
+      }
+
+      const createdRequest = await createCorporateRouteRequest(clientId, {
         direction: form.direction,
         plannedStartTime: `${form.plannedStartTime}:00`,
+        plannedStops: stopPlan,
         routeName: form.routeName,
         shift: form.shift,
         workingDays: form.workingDays,
@@ -122,12 +181,13 @@ export function CorporateRouteRequestsPage({
 
       setItems((current) => [createdRequest, ...current]);
       setForm(emptyForm);
+      setStopPlan([]);
       setIsOpen(false);
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Rota talebi oluşturulamadı. Backend veya validasyon hatasını kontrol edin.",
+          : "Rota talebi olusturulamadi. Backend veya validasyon hatasini kontrol edin.",
       );
     } finally {
       setIsSubmitting(false);
@@ -138,18 +198,23 @@ export function CorporateRouteRequestsPage({
     <>
       <PageSection
         action={
-          <Button onClick={() => setIsOpen(true)}>
+          <Button
+            onClick={() => {
+              setError(null);
+              setIsOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4" />
             Rota Talebi Ekle
           </Button>
         }
-        description="Şirket yöneticisinin oluşturduğu rota talepleri admin tarafından izlenir ve onay ekranlarına aktarılır."
+        description="Servis yoneticisi kendi kurumuna ait duraklari siraya alarak rota talebi olusturur."
         eyebrow="Corporate Shuttle"
         title="Route Requests"
       >
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <MetricCard
-            hint="Şirket yöneticileri tarafından girildi"
+            hint="Kurum tarafindan girildi"
             icon={Route}
             label="Toplam Talep"
             value={items.length}
@@ -157,20 +222,20 @@ export function CorporateRouteRequestsPage({
           <MetricCard
             hint="ABC Turizm incelemesi bekliyor"
             icon={Route}
-            label="Gönderilen Plan"
+            label="Gonderilen"
             value={items.filter((request) => request.status === "submitted").length}
           />
           <MetricCard
-            hint="Operasyona aktarılabilir"
+            hint="Operasyona aktarilabilir"
             icon={Route}
-            label="Onaylı Rota"
+            label="Onayli Rota"
             value={items.filter((request) => request.status === "approved").length}
           />
         </div>
 
         <TableShell
-          description="Başlangıç, bitiş, durak ve çalışan sayısı operasyonel değerlendirme için gösterilir."
-          searchPlaceholder="Rota, client veya başlangıç noktası ara..."
+          description="Durak sirasi ve opsiyonel hedef saat bilgileri rota talebiyle birlikte izlenir."
+          searchPlaceholder="Rota veya baslangic noktasi ara..."
           title="Rota Talepleri"
         >
           <table className="w-full min-w-[1200px] border-collapse">
@@ -180,13 +245,13 @@ export function CorporateRouteRequestsPage({
                   Rota
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Başlangıç / Bitiş
+                  Baslangic / Bitis
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                   Vardiya
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Kapasite
+                  Durak Sirasi
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                   Tahmin
@@ -223,7 +288,20 @@ export function CorporateRouteRequestsPage({
                     </p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {request.employeeCount} çalışan, {request.stopCount} durak
+                    {request.plannedStops?.length ? (
+                      <div className="flex max-w-[320px] flex-wrap gap-1.5">
+                        {request.plannedStops.map((stop) => (
+                          <Badge key={stop.stopId} variant="neutral">
+                            {stop.sequence}. {stop.stopName}
+                            {stop.estimatedArrivalTime
+                              ? ` / ${stop.estimatedArrivalTime}`
+                              : ""}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      `${request.stopCount} durak / ${request.employeeCount} calisan`
+                    )}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
                     {request.estimatedDistanceKm} km /{" "}
@@ -240,7 +318,7 @@ export function CorporateRouteRequestsPage({
       </PageSection>
 
       <Modal
-        description="Yeni rota talebi backend'e kaydedilir ve listeye eklenir."
+        description="Durak sirasi ve hedef saatler rota talebi ile birlikte gonderilir."
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         title="Rota Talebi Ekle"
@@ -248,9 +326,9 @@ export function CorporateRouteRequestsPage({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-5 px-6 py-5 md:grid-cols-2">
             <InputField
-              label="Rota adı"
+              label="Rota adi"
               onChange={(value) => updateField("routeName", value)}
-              placeholder="Kadıköy - Maslak Sabah Servisi"
+              placeholder="Kadikoy - Maslak Sabah Servisi"
               required
               value={form.routeName}
             />
@@ -259,29 +337,29 @@ export function CorporateRouteRequestsPage({
               onChange={(value) => updateField("shift", value)}
               options={[
                 { label: "Sabah", value: "Sabah" },
-                { label: "Akşam", value: "Aksam" },
+                { label: "Aksam", value: "Aksam" },
                 { label: "Vardiya", value: "Vardiya" },
               ]}
               value={form.shift}
             />
             <SelectField
-              label="Yön"
+              label="Yon"
               onChange={(value) => updateField("direction", value)}
               options={[
-                { label: "Gidiş", value: "Gidis" },
-                { label: "Dönüş", value: "Donus" },
+                { label: "Gidis", value: "Gidis" },
+                { label: "Donus", value: "Donus" },
               ]}
               value={form.direction}
             />
             <InputField
-              label="Başlangıç saati"
+              label="Baslangic saati"
               onChange={(value) => updateField("plannedStartTime", value)}
               required
               type="time"
               value={form.plannedStartTime}
             />
             <SelectField
-              label="Çalışma günleri"
+              label="Calisma gunleri"
               onChange={(value) => updateField("workingDays", value)}
               options={[
                 { label: "Pazartesi - Cuma", value: "1,2,3,4,5" },
@@ -289,11 +367,138 @@ export function CorporateRouteRequestsPage({
               ]}
               value={form.workingDays}
             />
+
+            <div className="md:col-span-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-950">
+                      Durak sirasi
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Eklenen duraklar bu sirayla rota talebine baglanir.
+                      Hedef saat opsiyoneldir.
+                    </p>
+                  </div>
+                  <Badge variant="teal">{stopPlan.length} durak</Badge>
+                </div>
+
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-semibold uppercase text-slate-500">
+                      Mevcut duraklar
+                    </p>
+                    <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+                      {stops.length ? (
+                        stops.map((stop) => {
+                          const isSelected = stopPlan.some(
+                            (item) => item.stopId === stop.id,
+                          );
+
+                          return (
+                            <button
+                              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              disabled={isSelected}
+                              key={stop.id}
+                              onClick={() => addStop(stop)}
+                              type="button"
+                            >
+                              <span>
+                                <span className="font-semibold text-slate-900">
+                                  {stop.stopName}
+                                </span>
+                                <span className="mt-0.5 block text-xs text-slate-500">
+                                  {stop.address}
+                                </span>
+                              </span>
+                              <span className="text-xs font-semibold text-teal-700">
+                                {isSelected ? "Eklendi" : "Ekle"}
+                              </span>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                          Once durak talebi olusturun.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-semibold uppercase text-slate-500">
+                      Secilen rota sirasi
+                    </p>
+                    <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+                      {stopPlan.length ? (
+                        stopPlan.map((stop, index) => (
+                          <div
+                            className="rounded-xl border border-slate-200 p-3"
+                            key={stop.stopId}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
+                                {stop.sequence}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-slate-950">
+                                  {stop.stopName}
+                                </p>
+                                <input
+                                  className="mt-2 h-9 w-full rounded-lg border border-slate-200 px-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50"
+                                  onChange={(event) =>
+                                    updateStopTime(
+                                      stop.stopId,
+                                      event.target.value,
+                                    )
+                                  }
+                                  type="time"
+                                  value={stop.estimatedArrivalTime ?? ""}
+                                />
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  disabled={index === 0}
+                                  onClick={() => moveStop(stop.stopId, "up")}
+                                  size="icon"
+                                  variant="secondary"
+                                >
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  disabled={index === stopPlan.length - 1}
+                                  onClick={() => moveStop(stop.stopId, "down")}
+                                  size="icon"
+                                  variant="secondary"
+                                >
+                                  <ArrowDown className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  onClick={() => removeStop(stop.stopId)}
+                                  size="icon"
+                                  variant="danger"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                          Sol taraftan durak ekleyin.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           {error ? <p className="px-6 text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
             <Button onClick={() => setIsOpen(false)} variant="secondary">
-              Vazgeç
+              Vazgec
             </Button>
             <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Kaydediliyor..." : "Kaydet"}

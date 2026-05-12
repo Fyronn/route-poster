@@ -53,9 +53,11 @@ export type Client = {
 
 export type CreateClientFormValues = {
   companyName: string;
-  contactName: string;
+  contactFirstName: string;
+  contactLastName: string;
   phone: string;
   email: string;
+  password: string;
   address: string;
   city: string;
   district: string;

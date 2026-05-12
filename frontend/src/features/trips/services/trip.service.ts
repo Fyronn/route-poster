@@ -3,6 +3,11 @@ import { getRequest, postRequest } from "@/lib/api";
 import { tripsMockData } from "../constants";
 import type { Trip, TripDto } from "../types";
 
+type ServiceOptions = {
+  authToken?: string | null;
+  routeIds?: number[];
+};
+
 function mapTripStatus(status?: string | null): Trip["status"] {
   if (status === "Başladı" || status === "Basladi" || status === "Started") {
     return "started";
@@ -22,6 +27,7 @@ function mapTripDto(dto: TripDto): Trip {
 
   return {
     id: dto.SeferId ?? dto.seferId ?? 0,
+    routeId: routeId ?? null,
     date: dto.SeferTarihi ?? dto.seferTarihi ?? "-",
     time: startTime
       ? new Date(startTime).toLocaleTimeString("tr-TR", {
@@ -36,10 +42,21 @@ function mapTripDto(dto: TripDto): Trip {
   };
 }
 
-export async function getTrips() {
+export async function getTrips(options: ServiceOptions = {}) {
   try {
-    const trips = await getRequest<TripDto[]>("/api/trips");
-    return trips.map(mapTripDto);
+    const trips = await getRequest<TripDto[]>("/api/trips", {
+      authToken: options.authToken,
+    });
+    const mappedTrips = trips.map(mapTripDto);
+
+    if (Array.isArray(options.routeIds)) {
+      const allowedRouteIds = new Set(options.routeIds);
+      return mappedTrips.filter(
+        (trip) => trip.routeId !== null && allowedRouteIds.has(trip.routeId),
+      );
+    }
+
+    return mappedTrips;
   } catch {
     return tripsMockData;
   }

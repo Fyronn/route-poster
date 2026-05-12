@@ -125,9 +125,11 @@ export function ClientCreateWizard() {
     if (step === 0) {
       return Boolean(
         formValues.companyName &&
-          formValues.contactName &&
+          formValues.contactFirstName &&
+          formValues.contactLastName &&
           formValues.phone &&
           formValues.email &&
+          formValues.password.length >= 6 &&
           formValues.address,
       );
     }
@@ -192,10 +194,17 @@ export function ClientCreateWizard() {
                   />
                   <Field
                     label="Yetkili kişi"
-                    onChange={(value) => updateField("contactName", value)}
-                    placeholder="Jane Wilson"
+                    onChange={(value) => updateField("contactFirstName", value)}
+                    placeholder="Jane"
                     required
-                    value={formValues.contactName}
+                    value={formValues.contactFirstName}
+                  />
+                  <Field
+                    label="Yetkili soyadi"
+                    onChange={(value) => updateField("contactLastName", value)}
+                    placeholder="Wilson"
+                    required
+                    value={formValues.contactLastName}
                   />
                   <Field
                     label="Telefon"
@@ -211,6 +220,14 @@ export function ClientCreateWizard() {
                     required
                     type="email"
                     value={formValues.email}
+                  />
+                  <Field
+                    label="Yetkili sifre"
+                    onChange={(value) => updateField("password", value)}
+                    placeholder="En az 6 karakter"
+                    required
+                    type="password"
+                    value={formValues.password}
                   />
                   <Field
                     label="Şehir"
@@ -363,7 +380,10 @@ export function ClientCreateWizard() {
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {[
                     ["Şirket", formValues.companyName],
-                    ["Yetkili", formValues.contactName],
+                    [
+                      "Yetkili",
+                      `${formValues.contactFirstName} ${formValues.contactLastName}`.trim(),
+                    ],
                     ["Telefon", formValues.phone],
                     ["E-posta", formValues.email],
                     ["Adres", formValues.address],

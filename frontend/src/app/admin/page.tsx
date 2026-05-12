@@ -1,68 +1,122 @@
 import Link from "next/link";
-import { ArrowRight, Building2, ClipboardList, Route, Send } from "lucide-react";
+import { redirect } from "next/navigation";
+import {
+  ArrowRight,
+  Bus,
+  Building2,
+  CheckSquare,
+  MapPin,
+  Route,
+  Send,
+  Users,
+} from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { PageSection } from "@/components/shared/PageSection";
 import { clientsMockData } from "@/features/clients/constants";
+import {
+  getScopedClientId,
+  isAdminUser,
+  isServiceManager,
+  requireServerAuthSession,
+} from "@/lib/auth-server";
 
-const dashboardLinks = [
+const adminDashboardLinks = [
   {
-    title: "Client oluştur",
-    description: "Corporate shuttle modülüyle yeni client kurulumunu başlat.",
+    title: "Client olustur",
+    description: "Corporate shuttle moduluyle yeni client kurulumunu baslat.",
     href: "/admin/clients/create",
     icon: Building2,
   },
   {
-    title: "Setup checklist",
-    description: "Client kurulum adımlarını ve eksikleri izle.",
-    href: "/admin/clients/1/setup",
-    icon: ClipboardList,
+    title: "Suruculer",
+    description: "Rotalara atanacak sofor kayitlarini yonet.",
+    href: "/admin/drivers",
+    icon: Users,
   },
   {
-    title: "Plan talepleri",
-    description: "ABC Turizm onayı bekleyen servis planlarını incele.",
-    href: "/admin/shuttle-plan-requests",
-    icon: Send,
+    title: "Araclar",
+    description: "Servis filosunu ve kapasite bilgisini yonet.",
+    href: "/admin/vehicles",
+    icon: Bus,
   },
   {
-    title: "Rota onayları",
-    description: "Operasyonel rota kararlarını rota seviyesinde ver.",
+    title: "Rota onaylari",
+    description: "Gelen rota taleplerini onayla ve servis atamasini baslat.",
     href: "/admin/route-request-approvals",
-    icon: Route,
+    icon: CheckSquare,
   },
 ];
 
-export default function AdminDashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboardPage() {
+  const session = await requireServerAuthSession();
+  const clientId = getScopedClientId(session);
+  const isAdmin = isAdminUser(session.user);
+  const isServiceManagerUser = isServiceManager(session.user);
+
+  if (!isAdmin && !isServiceManagerUser) {
+    redirect("/unauthorized");
+  }
+
+  if (isServiceManagerUser && !session.user.clientId) {
+    redirect("/unauthorized");
+  }
+
+  const links = isServiceManagerUser
+    ? [
+        {
+          title: "Calisanlar",
+          description: "Kendi kurumunuzun servis kullanacak calisanlarini yonetin.",
+          href: "/admin/corporate-shuttle/employees",
+          icon: Users,
+        },
+        {
+          title: "Durak talepleri",
+          description: "Kendi kurumunuz icin durak taleplerini olusturun.",
+          href: "/admin/corporate-shuttle/stops",
+          icon: MapPin,
+        },
+        {
+          title: "Rota talepleri",
+          description: "Durak sirasi ve saatleriyle rota talebi gonderin.",
+          href: "/admin/corporate-shuttle/route-requests",
+          icon: Route,
+        },
+      ]
+    : adminDashboardLinks;
+
   return (
     <PageSection
-      description="Corporate employee shuttle admin operasyonları için hızlı erişim."
+      description="Role gore ayrilmis corporate employee shuttle operasyon paneli."
       title="Dashboard"
     >
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <MetricCard
-          hint="Corporate shuttle odağında"
+          hint={isServiceManagerUser ? "Oturumdaki kurum" : "Corporate shuttle"}
           icon={Building2}
-          label="Aktif Client"
-          value={clientsMockData.length}
+          label={isServiceManagerUser ? "Kurum ID" : "Aktif Client"}
+          value={isServiceManagerUser ? clientId : clientsMockData.length}
         />
         <MetricCard
-          hint="Onay akışında bekleyen"
+          hint={isServiceManagerUser ? "Admin incelemesine gidecek" : "Onay bekliyor"}
           icon={Send}
-          label="Plan Talebi"
-          value={2}
+          label={isServiceManagerUser ? "Talep Akisi" : "Plan Talebi"}
+          value={isServiceManagerUser ? 3 : 2}
         />
         <MetricCard
-          hint="Operasyona dönüşecek"
+          hint={isServiceManagerUser ? "Durak ve rota hazirligi" : "Operasyon karari"}
           icon={Route}
-          label="Rota Kararı"
-          value={4}
+          label={isServiceManagerUser ? "Hazirlik" : "Rota Karari"}
+          value={isServiceManagerUser ? 2 : 4}
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardLinks.map((item) => {
+        {links.map((item) => {
           const Icon = item.icon;
 
           return (
@@ -81,7 +135,7 @@ export default function AdminDashboardPage() {
                 })}
                 href={item.href}
               >
-                Aç
+                Ac
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Card>

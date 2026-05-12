@@ -3,6 +3,8 @@ namespace RoutePoster.Application.DTOs.Auth;
 public class UserDto
 {
     public int KullaniciId { get; set; }
+    public int? KurumId { get; set; }
+    public int? RolId { get; set; }
     public string Ad { get; set; } = null!;
     public string Soyad { get; set; } = null!;
     public string Email { get; set; } = null!;

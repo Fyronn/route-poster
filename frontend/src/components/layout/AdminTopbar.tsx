@@ -1,6 +1,7 @@
 import { Bell, Search } from "lucide-react";
+import type { AuthUser } from "@/features/auth/types";
 
-export function AdminTopbar() {
+export function AdminTopbar({ authUser }: { authUser: AuthUser }) {
   return (
     <header className="sticky top-0 z-30 flex h-[64px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
       <div className="lg:hidden">
@@ -25,6 +26,15 @@ export function AdminTopbar() {
             3
           </span>
         </button>
+
+        <div className="hidden text-right sm:block">
+          <p className="text-sm font-semibold text-slate-950">
+            {authUser.firstName} {authUser.lastName}
+          </p>
+          <p className="text-xs text-slate-500">
+            {authUser.clientId ? `Kurum #${authUser.clientId}` : "ABC Turizm"}
+          </p>
+        </div>
       </div>
     </header>
   );

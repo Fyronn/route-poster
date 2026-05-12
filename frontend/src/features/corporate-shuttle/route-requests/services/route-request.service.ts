@@ -3,6 +3,10 @@ import { getRequest, postRequest } from "@/lib/api";
 import { corporateRouteRequestsMockData } from "../constants";
 import type { CorporateRouteRequest, RouteRequestDto } from "../types";
 
+type ServiceOptions = {
+  authToken?: string | null;
+};
+
 export function mapRouteRequestStatus(
   status?: string | null,
 ): CorporateRouteRequest["status"] {
@@ -56,10 +60,14 @@ export function mapRouteRequestDto(dto: RouteRequestDto): CorporateRouteRequest 
   };
 }
 
-export async function getCorporateRouteRequests(clientId = 1) {
+export async function getCorporateRouteRequests(
+  clientId = 1,
+  options: ServiceOptions = {},
+) {
   try {
     const requests = await getRequest<RouteRequestDto[]>(
       `/api/corporate-shuttle/clients/${clientId}/route-requests`,
+      { authToken: options.authToken },
     );
     return requests.map(mapRouteRequestDto);
   } catch {
@@ -75,18 +83,34 @@ export async function createCorporateRouteRequest(
     direction?: string;
     workingDays?: string;
     plannedStartTime?: string;
+    plannedStops?: Array<{
+      estimatedArrivalTime?: string;
+      sequence: number;
+      stopId: number;
+      stopName: string;
+    }>;
   },
 ) {
   const request = await postRequest<RouteRequestDto>(
     `/api/corporate-shuttle/clients/${clientId}/route-requests`,
     {
+      kurumId: clientId,
       rotaAdi: payload.routeName,
       vardiyaTipi: payload.shift,
       yon: payload.direction,
       calismaGunleri: payload.workingDays,
       planlananBaslangicSaati: payload.plannedStartTime,
+      rotaDuraklari: payload.plannedStops?.map((stop) => ({
+        durakId: stop.stopId,
+        durakAdi: stop.stopName,
+        hedefVarisSaati: stop.estimatedArrivalTime || null,
+        siraNo: stop.sequence,
+      })),
     },
   );
 
-  return mapRouteRequestDto(request);
+  return {
+    ...mapRouteRequestDto(request),
+    plannedStops: payload.plannedStops,
+  };
 }

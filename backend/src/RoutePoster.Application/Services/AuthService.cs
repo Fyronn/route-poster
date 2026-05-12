@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -32,20 +33,7 @@ public class AuthService : IAuthService
             return null;
         }
 
-        var token = GenerateJwtToken(user);
-
-        return new AuthResponseDto
-        {
-            Token = token,
-            User = new UserDto
-            {
-                KullaniciId = user.KullaniciId,
-                Ad = user.Ad,
-                Soyad = user.Soyad,
-                Email = user.Email ?? "",
-                RolAdi = user.Rol?.RolAdi
-            }
-        };
+        return CreateAuthResponse(user);
     }
 
     public async Task<AuthResponseDto?> RegisterAsync(RegisterRequestDto registerDto)
@@ -63,6 +51,7 @@ public class AuthService : IAuthService
             Email = registerDto.Email,
             SifreHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
             RolId = registerDto.RolId,
+            KurumId = registerDto.KurumId,
             AktifMi = true,
             OlusturmaTarihi = DateTime.Now
         };
@@ -70,7 +59,17 @@ public class AuthService : IAuthService
         await _userRepository.AddAsync(user);
         await _userRepository.SaveChangesAsync();
 
-        var token = GenerateJwtToken(user);
+        return CreateAuthResponse(user, registerDto.RolId, registerDto.KurumId);
+    }
+
+    private AuthResponseDto CreateAuthResponse(
+        TblKullanicilar user,
+        int? fallbackRolId = null,
+        int? fallbackKurumId = null)
+    {
+        var rolId = user.RolId ?? fallbackRolId;
+        var kurumId = user.KurumId ?? fallbackKurumId;
+        var token = GenerateJwtToken(user, rolId, kurumId);
 
         return new AuthResponseDto
         {
@@ -78,15 +77,17 @@ public class AuthService : IAuthService
             User = new UserDto
             {
                 KullaniciId = user.KullaniciId,
+                KurumId = kurumId,
+                RolId = rolId,
                 Ad = user.Ad,
                 Soyad = user.Soyad,
-                Email = user.Email,
-                RolAdi = null // Newly registered might not have Rol object loaded
+                Email = user.Email ?? "",
+                RolAdi = user.Rol?.RolAdi ?? ResolveRoleName(rolId)
             }
         };
     }
 
-    private string GenerateJwtToken(TblKullanicilar user)
+    private string GenerateJwtToken(TblKullanicilar user, int? rolId, int? kurumId)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "SUPER_SECRET_KEY_THAT_IS_LONG_ENOUGH_12345");
@@ -94,12 +95,7 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.KullaniciId.ToString()),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim(ClaimTypes.Role, user.Rol?.RolKodu ?? "User")
-            }),
+            Subject = new ClaimsIdentity(BuildClaims(user, rolId, kurumId)),
             Expires = DateTime.UtcNow.AddDays(7),
             Issuer = jwtSettings["Issuer"],
             Audience = jwtSettings["Audience"],
@@ -108,5 +104,38 @@ public class AuthService : IAuthService
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    private static IEnumerable<Claim> BuildClaims(TblKullanicilar user, int? rolId, int? kurumId)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.KullaniciId.ToString()),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim(ClaimTypes.Role, user.Rol?.RolKodu ?? rolId?.ToString() ?? "User")
+        };
+
+        if (rolId.HasValue)
+        {
+            claims.Add(new Claim("rolId", rolId.Value.ToString()));
+        }
+
+        if (kurumId.HasValue)
+        {
+            claims.Add(new Claim("kurumId", kurumId.Value.ToString()));
+        }
+
+        return claims;
+    }
+
+    private static string? ResolveRoleName(int? rolId)
+    {
+        return rolId switch
+        {
+            6 => "Servis Yoneticisi",
+            5 => "Surucu",
+            1 => "Admin",
+            _ => null
+        };
     }
 }

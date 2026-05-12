@@ -62,8 +62,10 @@ function InputField({
 }
 
 export function CorporateEmployeesPage({
+  clientId,
   employees,
 }: {
+  clientId: number;
   employees: CorporateEmployee[];
 }) {
   const [items, setItems] = useState(employees);
@@ -82,7 +84,7 @@ export function CorporateEmployeesPage({
     setIsSubmitting(true);
 
     try {
-      const createdEmployee = await createCorporateEmployee(1, form);
+      const createdEmployee = await createCorporateEmployee(clientId, form);
       setItems((current) => [createdEmployee, ...current]);
       setForm(emptyForm);
       setIsOpen(false);

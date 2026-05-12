@@ -5,9 +5,19 @@ import type { RouteRequestDto } from "@/features/corporate-shuttle/route-request
 import { serviceRoutesMockData } from "../constants";
 import type { ServiceRoute } from "../types";
 
-export async function getServiceRoutes() {
+type ServiceOptions = {
+  authToken?: string | null;
+  clientId?: number | null;
+};
+
+export async function getServiceRoutes(options: ServiceOptions = {}) {
   try {
-    const routes = await getRequest<RouteRequestDto[]>("/api/service-routes");
+    const path = options.clientId
+      ? `/api/service-routes/client/${options.clientId}`
+      : "/api/service-routes";
+    const routes = await getRequest<RouteRequestDto[]>(path, {
+      authToken: options.authToken,
+    });
 
     return routes.map<ServiceRoute>((route) => {
       const mapped = mapRouteRequestDto(route);
@@ -30,6 +40,7 @@ export async function getServiceRoutes() {
 }
 
 export async function createServiceRoute(payload: {
+  clientId?: number | null;
   routeName: string;
   shift?: string;
   direction?: string;
@@ -42,6 +53,7 @@ export async function createServiceRoute(payload: {
     yon: payload.direction,
     calismaGunleri: payload.workingDays,
     planlananBaslangicSaati: payload.plannedStartTime,
+    kurumId: payload.clientId,
   });
 
   const mapped = mapRouteRequestDto(route);

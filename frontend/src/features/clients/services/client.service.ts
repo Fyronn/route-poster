@@ -4,9 +4,15 @@ import {
   postRequest,
   putRequest,
 } from "@/lib/api";
+import { SERVICE_MANAGER_ROLE_ID } from "@/features/auth/constants";
+import { registerUser } from "@/features/auth/services/auth.service";
 
 import { clientsMockData } from "../constants";
 import type { Client, ClientDto, CreateClientPayload } from "../types";
+
+type ServiceOptions = {
+  authToken?: string | null;
+};
 
 function mapTransportTypeLabel(value?: string | null) {
   if (
@@ -57,13 +63,15 @@ function mapClientDto(dto: ClientDto): Client {
 }
 
 function toCreateClientDto(payload: CreateClientPayload) {
+  const contactName = `${payload.contactFirstName} ${payload.contactLastName}`.trim();
+
   return {
     kurumAdi: payload.companyName,
     kurumTipi: "Corporate",
     vergiNo: payload.taxNumber || null,
     adresIl: payload.city,
     adresIlce: payload.district,
-    yetkiliKisi: payload.contactName,
+    yetkiliKisi: contactName,
     telefon: payload.phone,
     email: payload.email,
     kurulumTercihi:
@@ -75,18 +83,25 @@ function toCreateClientDto(payload: CreateClientPayload) {
   };
 }
 
-export async function getClients() {
+export async function getClients(options: ServiceOptions = {}) {
   try {
-    const clients = await getRequest<ClientDto[]>("/api/clients");
+    const clients = await getRequest<ClientDto[]>("/api/clients", {
+      authToken: options.authToken,
+    });
     return clients.map(mapClientDto);
   } catch {
     return clientsMockData;
   }
 }
 
-export async function getClientById(clientId: string | number) {
+export async function getClientById(
+  clientId: string | number,
+  options: ServiceOptions = {},
+) {
   try {
-    const client = await getRequest<ClientDto>(`/api/clients/${clientId}`);
+    const client = await getRequest<ClientDto>(`/api/clients/${clientId}`, {
+      authToken: options.authToken,
+    });
     return mapClientDto(client);
   } catch {
     return (
@@ -103,8 +118,25 @@ export async function createClient(payload: CreateClientPayload) {
     "/api/clients",
     toCreateClientDto(payload),
   );
+  const client = mapClientDto(createdClient);
+  const clientId = client.numericId;
 
-  return mapClientDto(createdClient);
+  if (!clientId) {
+    throw new Error(
+      "Client olusturuldu ancak backend kurumId dondurmedi. Yetkili kullanici kuruma baglanamadi.",
+    );
+  }
+
+  await registerUser({
+    clientId,
+    email: payload.email,
+    firstName: payload.contactFirstName,
+    lastName: payload.contactLastName,
+    password: payload.password,
+    roleId: SERVICE_MANAGER_ROLE_ID,
+  });
+
+  return client;
 }
 
 export async function updateClient(

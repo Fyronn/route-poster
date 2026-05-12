@@ -15,6 +15,7 @@ import { createServiceRoute } from "../services/service-route.service";
 import type { ServiceRoute } from "../types";
 
 type FormState = {
+  clientId: string;
   direction: string;
   plannedStartTime: string;
   routeName: string;
@@ -23,6 +24,7 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
+  clientId: "1",
   direction: "Gidis",
   plannedStartTime: "07:30",
   routeName: "",
@@ -76,6 +78,7 @@ export function ServiceRoutesPage({ routes }: { routes: ServiceRoute[] }) {
     try {
       const createdRoute = await createServiceRoute({
         ...form,
+        clientId: Number(form.clientId),
         plannedStartTime: `${form.plannedStartTime}:00`,
       });
       setItems((current) => [createdRoute, ...current]);
@@ -194,6 +197,13 @@ export function ServiceRoutesPage({ routes }: { routes: ServiceRoute[] }) {
       >
         <form onSubmit={handleSubmit}>
           <div className="grid gap-5 px-6 py-5 md:grid-cols-2">
+            <Field
+              label="Client / Kurum ID"
+              onChange={(value) => updateField("clientId", value)}
+              required
+              type="number"
+              value={form.clientId}
+            />
             <Field
               label="Rota adı"
               onChange={(value) => updateField("routeName", value)}
