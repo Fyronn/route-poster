@@ -66,6 +66,7 @@ builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.ITripServ
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IVehicleService, RoutePoster.Application.Services.VehicleService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IDriverService, RoutePoster.Application.Services.DriverService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IAuthService, RoutePoster.Application.Services.AuthService>();
+builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IRoleService, RoutePoster.Application.Services.RoleService>();
 
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 

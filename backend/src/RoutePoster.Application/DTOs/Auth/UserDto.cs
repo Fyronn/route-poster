@@ -7,4 +7,5 @@ public class UserDto
     public string Soyad { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string? RolAdi { get; set; }
+    public int? KurumId { get; set; }
 }

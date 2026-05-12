@@ -43,7 +43,8 @@ public class AuthService : IAuthService
                 Ad = user.Ad,
                 Soyad = user.Soyad,
                 Email = user.Email ?? "",
-                RolAdi = user.Rol?.RolAdi
+                RolAdi = user.Rol?.RolAdi,
+                KurumId = user.KurumId
             }
         };
     }
@@ -63,6 +64,7 @@ public class AuthService : IAuthService
             Email = registerDto.Email,
             SifreHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
             RolId = registerDto.RolId,
+            KurumId = registerDto.KurumId,
             AktifMi = true,
             OlusturmaTarihi = DateTime.Now
         };
@@ -81,7 +83,8 @@ public class AuthService : IAuthService
                 Ad = user.Ad,
                 Soyad = user.Soyad,
                 Email = user.Email,
-                RolAdi = null // Newly registered might not have Rol object loaded
+                RolAdi = null, // Newly registered might not have Rol object loaded
+                KurumId = user.KurumId
             }
         };
     }
