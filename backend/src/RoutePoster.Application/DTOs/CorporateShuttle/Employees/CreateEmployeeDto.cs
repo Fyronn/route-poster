@@ -2,11 +2,11 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.Employees
 {
     public class CreateEmployeeDto
     {
-        public int? KurumId { get; set; }
-        public string Ad { get; set; } = null!;
-        public string Soyad { get; set; } = null!;
+        public int? ClientId { get; set; }
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
         public string? Email { get; set; }
-        public string? Telefon { get; set; }
-        public string? KimlikNo { get; set; }
+        public string? Phone { get; set; }
+        public string? IdentityNumber { get; set; }
     }
 }

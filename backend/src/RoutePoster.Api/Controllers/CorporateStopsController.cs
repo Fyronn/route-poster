@@ -27,7 +27,7 @@ namespace RoutePoster.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<StopRequestDto>> Create(int clientId, [FromBody] CreateStopRequestDto dto)
         {
-            dto.KurumId = clientId;
+            dto.ClientId = clientId;
             var createdStop = await _stopRequestService.CreateAsync(dto);
             return Ok(createdStop);
         }

@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.Trips;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -25,19 +25,19 @@ namespace RoutePoster.Application.Services
         
         public async Task<IEnumerable<TripDto>> GetByRouteIdAsync(int routeId)
         {
-            var entities = await _tripRepository.FindAsync(t => t.RotaId == routeId);
+            var entities = await _tripRepository.FindAsync(t => t.RouteId == routeId);
             return entities.Select(MapToDto);
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto)
         {
-            var entity = new TblSeferler
+            var entity = new Tbltrip
             {
-                RotaId = dto.RotaId,
-                SeferTarihi = dto.SeferTarihi,
-                BaslamaZamani = dto.BaslamaZamani,
-                BitisZamani = dto.BitisZamani,
-                Statu = "Planlandı"
+                RouteId = dto.RouteId,
+                TripDate = dto.TripDate,
+                StartedAt = dto.StartTime,
+                CompletedAt = dto.EndTime,
+                Status = "Planned"
             };
 
             await _tripRepository.AddAsync(entity);
@@ -46,16 +46,16 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
-        private TripDto MapToDto(TblSeferler entity)
+        private TripDto MapToDto(Tbltrip entity)
         {
             return new TripDto
             {
-                SeferId = entity.SeferId,
-                RotaId = entity.RotaId,
-                SeferTarihi = entity.SeferTarihi,
-                BaslamaZamani = entity.BaslamaZamani,
-                BitisZamani = entity.BitisZamani,
-                Statu = entity.Statu
+                TripId = entity.Id,
+                RouteId = entity.RouteId,
+                TripDate = entity.TripDate,
+                StartTime = entity.StartedAt,
+                EndTime = entity.CompletedAt,
+                Status = entity.Status
             };
         }
     }

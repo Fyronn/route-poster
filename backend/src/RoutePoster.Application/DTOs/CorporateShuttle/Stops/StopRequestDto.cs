@@ -2,14 +2,14 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.Stops
 {
     public class StopRequestDto
     {
-        public int DurakId { get; set; }
-        public int? KurumId { get; set; }
-        public string? DurakAdi { get; set; }
-        public string? Adres { get; set; }
-        public decimal? Enlem { get; set; }
-        public decimal? Boylam { get; set; }
-        public string? Statu { get; set; } // "Talep Edildi", "Onaylandi"
-        public string? OperatorNotu { get; set; }
-        public bool? AktifMi { get; set; }
+        public int StopId { get; set; }
+        public int? ClientId { get; set; }
+        public string? StopName { get; set; }
+        public string? Address { get; set; }
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
+        public string? Status { get; set; } // "Requested", "Approved"
+        public string? OperatorNote { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

@@ -1,8 +1,8 @@
-using RoutePoster.Infrastructure;
+using RoutePoster.Domain.Entities;
 
 namespace RoutePoster.Domain.Interfaces
 {
-    public interface ITripRepository : IGenericRepository<TblSeferler>
+    public interface ITripRepository : IGenericRepository<Tbltrip>
     {
     }
 }

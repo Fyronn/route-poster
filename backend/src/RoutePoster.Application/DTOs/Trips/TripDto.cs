@@ -4,11 +4,11 @@ namespace RoutePoster.Application.DTOs.Trips
 {
     public class TripDto
     {
-        public int SeferId { get; set; }
-        public int? RotaId { get; set; }
-        public DateOnly SeferTarihi { get; set; }
-        public DateTime? BaslamaZamani { get; set; }
-        public DateTime? BitisZamani { get; set; }
-        public string? Statu { get; set; }
+        public int TripId { get; set; }
+        public int? RouteId { get; set; }
+        public DateOnly TripDate { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public string? Status { get; set; }
     }
 }

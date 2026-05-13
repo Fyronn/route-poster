@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -26,14 +26,13 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<RouteRequestDto>> GetByClientIdAsync(int clientId)
         {
-            var entities = await _routeRequestRepository.FindAsync(r => r.KurumId == clientId);
+            var entities = await _routeRequestRepository.FindAsync(r => r.ClientId == clientId);
             return entities.Select(MapToDto);
         }
 
         public async Task<IEnumerable<RouteRequestDto>> GetApprovedByClientIdAsync(int clientId)
         {
-            // ABC Turizm tarafindan onaylanan ("Onaylandı") rotalar Service Route olarak listelenebilir.
-            var entities = await _routeRequestRepository.FindAsync(r => r.KurumId == clientId && r.Statu == "Onaylandı");
+            var entities = await _routeRequestRepository.FindAsync(r => r.ClientId == clientId && r.Status == "Approved");
             return entities.Select(MapToDto);
         }
 
@@ -46,17 +45,17 @@ namespace RoutePoster.Application.Services
 
         public async Task<RouteRequestDto> CreateAsync(CreateRouteRequestDto dto)
         {
-            var entity = new TblRotalar
+            var entity = new Tblroute
             {
-                KurumId = dto.KurumId,
-                RotaAdi = dto.RotaAdi ?? string.Empty,
-                VardiyaTipi = dto.VardiyaTipi,
-                Yon = dto.Yon,
-                CalismaGunleri = dto.CalismaGunleri,
-                PlanlananBaslangicSaati = dto.PlanlananBaslangicSaati ?? new TimeOnly(0, 0),
-                Statu = "Talep Edildi",
-                AktifMi = true,
-                OlusturmaTarihi = DateTime.UtcNow
+                ClientId = dto.ClientId ?? 1,
+                RouteName = dto.RouteName ?? string.Empty,
+                ShiftType = dto.ShiftType,
+                Direction = dto.Direction,
+                OperatingDays = dto.OperatingDays,
+                PlannedStartTime = dto.PlannedStartTime ?? new TimeOnly(0, 0),
+                Status = "Requested",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _routeRequestRepository.AddAsync(entity);
@@ -70,26 +69,26 @@ namespace RoutePoster.Application.Services
             var entity = await _routeRequestRepository.GetByIdAsync(id);
             if (entity != null)
             {
-                entity.Statu = status;
+                entity.Status = status;
                 _routeRequestRepository.Update(entity);
                 await _routeRequestRepository.SaveChangesAsync();
             }
         }
 
-        private RouteRequestDto MapToDto(TblRotalar entity)
+        private RouteRequestDto MapToDto(Tblroute entity)
         {
             return new RouteRequestDto
             {
-                RotaId = entity.RotaId,
-                KurumId = entity.KurumId,
-                RotaAdi = entity.RotaAdi,
-                Statu = entity.Statu,
-                VardiyaTipi = entity.VardiyaTipi,
-                Yon = entity.Yon,
-                CalismaGunleri = entity.CalismaGunleri,
-                PlanlananBaslangicSaati = entity.PlanlananBaslangicSaati,
-                TahminiSureDakika = entity.TahminiSureDakika,
-                AktifMi = entity.AktifMi
+                RouteId = entity.Id,
+                ClientId = entity.ClientId,
+                RouteName = entity.RouteName,
+                Status = entity.Status,
+                ShiftType = entity.ShiftType,
+                Direction = entity.Direction,
+                OperatingDays = entity.OperatingDays,
+                PlannedStartTime = entity.PlannedStartTime,
+                EstimatedDurationMinutes = entity.EstimatedDurationMinutes,
+                IsActive = entity.IsActive
             };
         }
     }

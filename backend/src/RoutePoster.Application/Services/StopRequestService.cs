@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.CorporateShuttle.Stops;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -19,7 +19,7 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<StopRequestDto>> GetByClientIdAsync(int clientId)
         {
-            var entities = await _stopRequestRepository.FindAsync(s => s.KurumId == clientId);
+            var entities = await _stopRequestRepository.FindAsync(s => s.ClientId == clientId);
             return entities.Select(MapToDto);
         }
 
@@ -32,16 +32,17 @@ namespace RoutePoster.Application.Services
 
         public async Task<StopRequestDto> CreateAsync(CreateStopRequestDto dto)
         {
-            var entity = new TblDuraklar
+            var entity = new Tblstop
             {
-                KurumId = dto.KurumId,
-                DurakAdi = dto.DurakAdi ?? string.Empty,
-                Adres = dto.Adres,
-                Enlem = dto.Enlem,
-                Boylam = dto.Boylam,
-                OperatorNotu = dto.OperatorNotu,
-                Statu = "Talep Edildi",
-                AktifMi = true
+                ClientId = dto.ClientId,
+                StopName = dto.StopName ?? string.Empty,
+                Address = dto.Address,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                OperatorNote = dto.OperatorNote,
+                Status = "Requested",
+                IsActive = true,
+                TransportCompanyId = 1 // Default
             };
 
             await _stopRequestRepository.AddAsync(entity);
@@ -50,19 +51,19 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
-        private StopRequestDto MapToDto(TblDuraklar entity)
+        private StopRequestDto MapToDto(Tblstop entity)
         {
             return new StopRequestDto
             {
-                DurakId = entity.DurakId,
-                KurumId = entity.KurumId,
-                DurakAdi = entity.DurakAdi,
-                Adres = entity.Adres,
-                Enlem = entity.Enlem,
-                Boylam = entity.Boylam,
-                Statu = entity.Statu,
-                OperatorNotu = entity.OperatorNotu,
-                AktifMi = entity.AktifMi
+                StopId = entity.Id,
+                ClientId = entity.ClientId,
+                StopName = entity.StopName,
+                Address = entity.Address,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
+                Status = entity.Status,
+                OperatorNote = entity.OperatorNote,
+                IsActive = entity.IsActive
             };
         }
     }

@@ -1,8 +1,8 @@
-using RoutePoster.Infrastructure;
+using RoutePoster.Domain.Entities;
 
 namespace RoutePoster.Domain.Interfaces
 {
-    public interface IRouteRequestRepository : IGenericRepository<TblRotalar>
+    public interface IRouteRequestRepository : IGenericRepository<Tblroute>
     {
     }
 }

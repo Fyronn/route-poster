@@ -2,12 +2,12 @@ namespace RoutePoster.Application.DTOs.Vehicles
 {
     public class UpdateVehicleDto
     {
-        public string Plaka { get; set; } = null!;
-        public int Kapasite { get; set; }
-        public string? MarkaModel { get; set; }
-        public int? UretimYili { get; set; }
-        public string? AracTipi { get; set; }
-        public string? DonanimOzellikleri { get; set; }
-        public bool? AktifMi { get; set; }
+        public string PlateNumber { get; set; } = null!;
+        public int Capacity { get; set; }
+        public string? BrandModel { get; set; }
+        public int? ProductionYear { get; set; }
+        public string? VehicleType { get; set; }
+        public string? EquipmentFeatures { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

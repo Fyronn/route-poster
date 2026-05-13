@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
         var result = await _authService.LoginAsync(loginDto);
         if (result == null)
         {
-            return Unauthorized(new { message = "Geçersiz e-posta veya şifre." });
+            return Unauthorized(new { message = "Invalid email or password." });
         }
 
         return Ok(result);
@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
         var result = await _authService.RegisterAsync(registerDto);
         if (result == null)
         {
-            return BadRequest(new { message = "Bu e-posta adresi zaten kullanımda." });
+            return BadRequest(new { message = "This email address is already in use." });
         }
 
         return Ok(result);

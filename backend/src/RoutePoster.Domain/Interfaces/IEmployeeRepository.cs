@@ -1,8 +1,8 @@
-using RoutePoster.Infrastructure;
+using RoutePoster.Domain.Entities;
 
 namespace RoutePoster.Domain.Interfaces
 {
-    public interface IEmployeeRepository : IGenericRepository<TblKullanicilar>
+    public interface IEmployeeRepository : IGenericRepository<Tbluser>
     {
     }
 }

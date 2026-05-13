@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.Clients;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -32,16 +32,15 @@ namespace RoutePoster.Application.Services
 
         public async Task<ClientDto> CreateAsync(CreateClientDto dto)
         {
-            var entity = new TblMusteriKurumlar
+            var entity = new Tblclient
             {
-                KurumAdi = dto.KurumAdi,
-                KurumTipi = dto.KurumTipi,
-                VergiNo = dto.VergiNo,
-                AdresIl = dto.AdresIl,
-                AdresIlce = dto.AdresIlce,
-                AktifMi = true
-                // Note: DB doesn't have YetkiliKisi, Email, Telefon, KurulumTercihi as requested by user.
-                // Since this is DB first and user said no DB modification, they are omitted here.
+                ClientName = dto.ClientName,
+                ClientType = dto.ClientType,
+                TaxNumber = dto.TaxNumber,
+                City = dto.City,
+                District = dto.District,
+                IsActive = true,
+                TransportCompanyId = 1 // Default or from context if available
             };
 
             await _clientRepository.AddAsync(entity);
@@ -49,11 +48,10 @@ namespace RoutePoster.Application.Services
 
             var resultDto = MapToDto(entity);
             
-            // Map the virtual fields just for the response so frontend sees them (even if not persisted)
-            resultDto.YetkiliKisi = dto.YetkiliKisi;
-            resultDto.Telefon = dto.Telefon;
+            resultDto.AuthorizedPerson = dto.AuthorizedPerson;
+            resultDto.Phone = dto.Phone;
             resultDto.Email = dto.Email;
-            resultDto.KurulumTercihi = dto.KurulumTercihi;
+            resultDto.SetupPreference = dto.SetupPreference;
 
             return resultDto;
         }
@@ -63,12 +61,12 @@ namespace RoutePoster.Application.Services
             var entity = await _clientRepository.GetByIdAsync(id);
             if (entity != null)
             {
-                entity.KurumAdi = dto.KurumAdi;
-                entity.KurumTipi = dto.KurumTipi;
-                entity.VergiNo = dto.VergiNo;
-                entity.AdresIl = dto.AdresIl;
-                entity.AdresIlce = dto.AdresIlce;
-                entity.AktifMi = dto.AktifMi;
+                entity.ClientName = dto.ClientName;
+                entity.ClientType = dto.ClientType;
+                entity.TaxNumber = dto.TaxNumber;
+                entity.City = dto.City;
+                entity.District = dto.District;
+                entity.IsActive = dto.IsActive;
 
                 _clientRepository.Update(entity);
                 await _clientRepository.SaveChangesAsync();
@@ -85,17 +83,17 @@ namespace RoutePoster.Application.Services
             }
         }
 
-        private ClientDto MapToDto(TblMusteriKurumlar entity)
+        private ClientDto MapToDto(Tblclient entity)
         {
             return new ClientDto
             {
-                KurumId = entity.KurumId,
-                KurumAdi = entity.KurumAdi,
-                KurumTipi = entity.KurumTipi,
-                VergiNo = entity.VergiNo,
-                AdresIl = entity.AdresIl,
-                AdresIlce = entity.AdresIlce,
-                AktifMi = entity.AktifMi
+                ClientId = entity.Id,
+                ClientName = entity.ClientName,
+                ClientType = entity.ClientType,
+                TaxNumber = entity.TaxNumber,
+                City = entity.City,
+                District = entity.District,
+                IsActive = entity.IsActive
             };
         }
     }
