@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,495 +15,476 @@ public partial class ApplicationDbContext : DbContext
     {
     }
 
-    public virtual DbSet<TblAracKonumlari> TblAracKonumlaris { get; set; }
+    public virtual DbSet<Tblclient> Tblclients { get; set; }
 
-    public virtual DbSet<TblAraclar> TblAraclars { get; set; }
+    public virtual DbSet<TblclientDepartment> TblclientDepartments { get; set; }
 
-    public virtual DbSet<TblDuraklar> TblDuraklars { get; set; }
+    public virtual DbSet<TblpassengerAbsence> TblpassengerAbsences { get; set; }
 
-    public virtual DbSet<TblKullanicilar> TblKullanicilars { get; set; }
+    public virtual DbSet<TblpassengerRoutePreference> TblpassengerRoutePreferences { get; set; }
 
-    public virtual DbSet<TblKurumDepartmanlar> TblKurumDepartmanlars { get; set; }
+    public virtual DbSet<Tblrole> Tblroles { get; set; }
 
-    public virtual DbSet<TblMusteriKurumlar> TblMusteriKurumlars { get; set; }
+    public virtual DbSet<Tblroute> Tblroutes { get; set; }
 
-    public virtual DbSet<TblRoller> TblRollers { get; set; }
+    public virtual DbSet<TblrouteStop> TblrouteStops { get; set; }
 
-    public virtual DbSet<TblRotaDuraklari> TblRotaDuraklaris { get; set; }
+    public virtual DbSet<Tblstop> Tblstops { get; set; }
 
-    public virtual DbSet<TblRotalar> TblRotalars { get; set; }
+    public virtual DbSet<TbltransportCompany> TbltransportCompanies { get; set; }
 
-    public virtual DbSet<TblSeferAtamalari> TblSeferAtamalaris { get; set; }
+    public virtual DbSet<Tbltrip> Tbltrips { get; set; }
 
-    public virtual DbSet<TblSeferYoklama> TblSeferYoklamas { get; set; }
+    public virtual DbSet<TbltripAssignment> TbltripAssignments { get; set; }
 
-    public virtual DbSet<TblSeferler> TblSeferlers { get; set; }
+    public virtual DbSet<TbltripAttendance> TbltripAttendances { get; set; }
 
-    public virtual DbSet<TblTurizmFirmalari> TblTurizmFirmalaris { get; set; }
+    public virtual DbSet<Tbluser> Tblusers { get; set; }
 
-    public virtual DbSet<TblYolcuIstisnalari> TblYolcuIstisnalaris { get; set; }
+    public virtual DbSet<Tblvehicle> Tblvehicles { get; set; }
 
-    public virtual DbSet<TblYolcuRotaTercihleri> TblYolcuRotaTercihleris { get; set; }
+    public virtual DbSet<TblvehicleLocation> TblvehicleLocations { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=192.168.1.40;Database=ServisDB2;User Id=sa;Password=melih123;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TblAracKonumlari>(entity =>
+        modelBuilder.Entity<Tblclient>(entity =>
         {
-            entity.HasKey(e => e.KonumId).HasName("PK__TBL_ARAC__11C086045E46589F");
+            entity.HasKey(e => e.Id).HasName("PK__TBLClien__3214EC07D9BF0E66");
 
-            entity.ToTable("TBL_ARAC_KONUMLARI");
+            entity.ToTable("TBLClients");
 
-            entity.Property(e => e.KonumId).HasColumnName("Konum_ID");
-            entity.Property(e => e.AracId).HasColumnName("Arac_ID");
-            entity.Property(e => e.Boylam).HasColumnType("decimal(11, 8)");
-            entity.Property(e => e.Enlem).HasColumnType("decimal(10, 8)");
-            entity.Property(e => e.HizKmH).HasColumnName("Hiz_KmH");
-            entity.Property(e => e.KayitZamani)
+            entity.Property(e => e.City).HasMaxLength(50);
+            entity.Property(e => e.ClientName).HasMaxLength(150);
+            entity.Property(e => e.ClientType).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Kayit_Zamani");
-            entity.Property(e => e.SeferId).HasColumnName("Sefer_ID");
+                .HasColumnType("datetime");
+            entity.Property(e => e.District).HasMaxLength(50);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.Sector).HasMaxLength(100);
+            entity.Property(e => e.TaxNumber).HasMaxLength(50);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Arac).WithMany(p => p.TblAracKonumlaris)
-                .HasForeignKey(d => d.AracId)
-                .HasConstraintName("FK__TBL_ARAC___Arac___02084FDA");
-
-            entity.HasOne(d => d.Sefer).WithMany(p => p.TblAracKonumlaris)
-                .HasForeignKey(d => d.SeferId)
-                .HasConstraintName("FK__TBL_ARAC___Sefer__01142BA1");
+            entity.HasOne(d => d.TransportCompany).WithMany(p => p.Tblclients)
+                .HasForeignKey(d => d.TransportCompanyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKClientsTransportCompany");
         });
 
-        modelBuilder.Entity<TblAraclar>(entity =>
+        modelBuilder.Entity<TblclientDepartment>(entity =>
         {
-            entity.HasKey(e => e.AracId).HasName("PK__TBL_ARAC__0B8D7A579CF97AB3");
+            entity.HasKey(e => e.Id).HasName("PK__TBLClien__3214EC07A579A6E0");
 
-            entity.ToTable("TBL_ARACLAR");
+            entity.ToTable("TBLClientDepartments");
 
-            entity.HasIndex(e => e.Plaka, "UQ__TBL_ARAC__830E30F7B7781C7C").IsUnique();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.DepartmentName).HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
-            entity.Property(e => e.AracId).HasColumnName("Arac_ID");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.AracTipi)
-                .HasMaxLength(50)
-                .HasColumnName("Arac_Tipi");
-            entity.Property(e => e.DonanimOzellikleri)
-                .HasMaxLength(255)
-                .HasColumnName("Donanim_Ozellikleri");
-            entity.Property(e => e.MarkaModel)
-                .HasMaxLength(100)
-                .HasColumnName("Marka_Model");
-            entity.Property(e => e.Plaka).HasMaxLength(20);
-            entity.Property(e => e.TurizmFirmaId).HasColumnName("Turizm_Firma_ID");
-            entity.Property(e => e.UretimYili).HasColumnName("Uretim_Yili");
-
-            entity.HasOne(d => d.TurizmFirma).WithMany(p => p.TblAraclars)
-                .HasForeignKey(d => d.TurizmFirmaId)
-                .HasConstraintName("FK__TBL_ARACL__Turiz__5070F446");
+            entity.HasOne(d => d.Client).WithMany(p => p.TblclientDepartments)
+                .HasForeignKey(d => d.ClientId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKClientDepartmentsClient");
         });
 
-        modelBuilder.Entity<TblDuraklar>(entity =>
+        modelBuilder.Entity<TblpassengerAbsence>(entity =>
         {
-            entity.HasKey(e => e.DurakId).HasName("PK__TBL_DURA__64D53453E17480EA");
+            entity.HasKey(e => e.Id).HasName("PK__TBLPasse__3214EC07191D2286");
 
-            entity.ToTable("TBL_DURAKLAR");
+            entity.ToTable("TBLPassengerAbsences");
 
-            entity.Property(e => e.DurakId).HasColumnName("Durak_ID");
-            entity.Property(e => e.Adres).HasMaxLength(255);
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.BirlestirilenDurakId).HasColumnName("Birlestirilen_Durak_ID");
-            entity.Property(e => e.Boylam).HasColumnType("decimal(11, 8)");
-            entity.Property(e => e.DurakAdi)
-                .HasMaxLength(150)
-                .HasColumnName("Durak_Adi");
-            entity.Property(e => e.Enlem).HasColumnType("decimal(10, 8)");
-            entity.Property(e => e.KurumId).HasColumnName("Kurum_ID");
-            entity.Property(e => e.OperatorNotu).HasColumnName("Operator_Notu");
-            entity.Property(e => e.Statu)
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.NotificationTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Passenger).WithMany(p => p.TblpassengerAbsences)
+                .HasForeignKey(d => d.PassengerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPassengerAbsencesPassenger");
+
+            entity.HasOne(d => d.Route).WithMany(p => p.TblpassengerAbsences)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPassengerAbsencesRoute");
+        });
+
+        modelBuilder.Entity<TblpassengerRoutePreference>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLPasse__3214EC07D988271E");
+
+            entity.ToTable("TBLPassengerRoutePreferences");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDefault).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.DropoffStop).WithMany(p => p.TblpassengerRoutePreferenceDropoffStops)
+                .HasForeignKey(d => d.DropoffStopId)
+                .HasConstraintName("FKPassengerRoutePreferencesDropoffStop");
+
+            entity.HasOne(d => d.Passenger).WithMany(p => p.TblpassengerRoutePreferences)
+                .HasForeignKey(d => d.PassengerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPassengerRoutePreferencesPassenger");
+
+            entity.HasOne(d => d.PickupStop).WithMany(p => p.TblpassengerRoutePreferencePickupStops)
+                .HasForeignKey(d => d.PickupStopId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPassengerRoutePreferencesPickupStop");
+
+            entity.HasOne(d => d.Route).WithMany(p => p.TblpassengerRoutePreferences)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPassengerRoutePreferencesRoute");
+        });
+
+        modelBuilder.Entity<Tblrole>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLRoles__3214EC0717BC6005");
+
+            entity.ToTable("TBLRoles");
+
+            entity.HasIndex(e => e.RoleCode, "UQ__TBLRoles__D62CB59C99651FDC").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RoleCode).HasMaxLength(50);
+            entity.Property(e => e.RoleName).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Tblroute>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLRoute__3214EC07446714F9");
+
+            entity.ToTable("TBLRoutes");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Direction).HasMaxLength(20);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.OperatingDays).HasMaxLength(50);
+            entity.Property(e => e.RouteName).HasMaxLength(150);
+            entity.Property(e => e.ShiftType).HasMaxLength(50);
+            entity.Property(e => e.Status)
                 .HasMaxLength(30)
-                .HasDefaultValue("Talep Edildi");
-            entity.Property(e => e.TurizmFirmaId).HasColumnName("Turizm_Firma_ID");
+                .HasDefaultValue("Active");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
-            entity.HasOne(d => d.BirlestirilenDurak).WithMany(p => p.InverseBirlestirilenDurak)
-                .HasForeignKey(d => d.BirlestirilenDurakId)
-                .HasConstraintName("FK__TBL_DURAK__Birle__571DF1D5");
-
-            entity.HasOne(d => d.Kurum).WithMany(p => p.TblDuraklars)
-                .HasForeignKey(d => d.KurumId)
-                .HasConstraintName("FK__TBL_DURAK__Kurum__5535A963");
-
-            entity.HasOne(d => d.TurizmFirma).WithMany(p => p.TblDuraklars)
-                .HasForeignKey(d => d.TurizmFirmaId)
-                .HasConstraintName("FK__TBL_DURAK__Turiz__5441852A");
+            entity.HasOne(d => d.Client).WithMany(p => p.Tblroutes)
+                .HasForeignKey(d => d.ClientId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKRoutesClient");
         });
 
-        modelBuilder.Entity<TblKullanicilar>(entity =>
+        modelBuilder.Entity<TblrouteStop>(entity =>
         {
-            entity.HasKey(e => e.KullaniciId).HasName("PK__TBL_KULL__232AD4322216F6C9");
+            entity.HasKey(e => e.Id).HasName("PK__TBLRoute__3214EC07F3EB001C");
 
-            entity.ToTable("TBL_KULLANICILAR");
+            entity.ToTable("TBLRouteStops");
 
-            entity.HasIndex(e => e.Email, "UQ__TBL_KULL__A9D10534A4FF3158").IsUnique();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.DistanceFromPreviousKm).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
-            entity.Property(e => e.KullaniciId).HasColumnName("Kullanici_ID");
-            entity.Property(e => e.Ad).HasMaxLength(50);
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.CihazToken)
-                .HasMaxLength(255)
-                .HasColumnName("Cihaz_Token");
-            entity.Property(e => e.DepartmanId).HasColumnName("Departman_ID");
+            entity.HasOne(d => d.Route).WithMany(p => p.TblrouteStops)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKRouteStopsRoute");
+
+            entity.HasOne(d => d.Stop).WithMany(p => p.TblrouteStops)
+                .HasForeignKey(d => d.StopId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKRouteStopsStop");
+        });
+
+        modelBuilder.Entity<Tblstop>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLStops__3214EC076961F56B");
+
+            entity.ToTable("TBLStops");
+
+            entity.Property(e => e.Address).HasMaxLength(255);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.Latitude).HasColumnType("decimal(10, 8)");
+            entity.Property(e => e.Longitude).HasColumnType("decimal(11, 8)");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValue("Requested");
+            entity.Property(e => e.StopName).HasMaxLength(150);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Client).WithMany(p => p.Tblstops)
+                .HasForeignKey(d => d.ClientId)
+                .HasConstraintName("FKStopsClient");
+
+            entity.HasOne(d => d.MergedStop).WithMany(p => p.InverseMergedStop)
+                .HasForeignKey(d => d.MergedStopId)
+                .HasConstraintName("FKStopsMergedStop");
+
+            entity.HasOne(d => d.TransportCompany).WithMany(p => p.Tblstops)
+                .HasForeignKey(d => d.TransportCompanyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKStopsTransportCompany");
+        });
+
+        modelBuilder.Entity<TbltransportCompany>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLTrans__3214EC07FCC87939");
+
+            entity.ToTable("TBLTransportCompanies");
+
+            entity.HasIndex(e => e.TaxNumber, "UQ__TBLTrans__34A7C179BF57BA86").IsUnique();
+
+            entity.Property(e => e.CompanyName).HasMaxLength(150);
+            entity.Property(e => e.ContactPerson).HasMaxLength(100);
+            entity.Property(e => e.ContactPhone).HasMaxLength(20);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.RegistrationDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.TaxNumber).HasMaxLength(50);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Tbltrip>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLTrips__3214EC07224F5697");
+
+            entity.ToTable("TBLTrips");
+
+            entity.Property(e => e.CompletedAt).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.StartedAt).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValue("Planned");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Route).WithMany(p => p.Tbltrips)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripsRoute");
+        });
+
+        modelBuilder.Entity<TbltripAssignment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLTripA__3214EC0748128057");
+
+            entity.ToTable("TBLTripAssignments");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Driver).WithMany(p => p.TbltripAssignmentDrivers)
+                .HasForeignKey(d => d.DriverId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAssignmentsDriver");
+
+            entity.HasOne(d => d.ServiceSupervisor).WithMany(p => p.TbltripAssignmentServiceSupervisors)
+                .HasForeignKey(d => d.ServiceSupervisorId)
+                .HasConstraintName("FKTripAssignmentsServiceSupervisor");
+
+            entity.HasOne(d => d.Trip).WithMany(p => p.TbltripAssignments)
+                .HasForeignKey(d => d.TripId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAssignmentsTrip");
+
+            entity.HasOne(d => d.Vehicle).WithMany(p => p.TbltripAssignments)
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAssignmentsVehicle");
+        });
+
+        modelBuilder.Entity<TbltripAttendance>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLTripA__3214EC0739220F5D");
+
+            entity.ToTable("TBLTripAttendance");
+
+            entity.Property(e => e.ActionTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.AttendanceStatus).HasMaxLength(30);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.ActionByUser).WithMany(p => p.TbltripAttendanceActionByUsers)
+                .HasForeignKey(d => d.ActionByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAttendanceActionByUser");
+
+            entity.HasOne(d => d.Passenger).WithMany(p => p.TbltripAttendancePassengers)
+                .HasForeignKey(d => d.PassengerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAttendancePassenger");
+
+            entity.HasOne(d => d.Stop).WithMany(p => p.TbltripAttendances)
+                .HasForeignKey(d => d.StopId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAttendanceStop");
+
+            entity.HasOne(d => d.Trip).WithMany(p => p.TbltripAttendances)
+                .HasForeignKey(d => d.TripId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKTripAttendanceTrip");
+        });
+
+        modelBuilder.Entity<Tbluser>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLUsers__3214EC07D2BBD9EA");
+
+            entity.ToTable("TBLUsers");
+
+            entity.HasIndex(e => e.Email, "UQ__TBLUsers__A9D1053445A0FC68").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.DeviceToken).HasMaxLength(255);
             entity.Property(e => e.Email).HasMaxLength(150);
-            entity.Property(e => e.KimlikNo)
-                .HasMaxLength(20)
-                .HasColumnName("Kimlik_No");
-            entity.Property(e => e.KurumId).HasColumnName("Kurum_ID");
-            entity.Property(e => e.OlusturmaTarihi)
+            entity.Property(e => e.FirstName).HasMaxLength(50);
+            entity.Property(e => e.IdentityNumber).HasMaxLength(20);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastName).HasMaxLength(50);
+            entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.RegistrationDate)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Olusturma_Tarihi");
-            entity.Property(e => e.RolId).HasColumnName("Rol_ID");
-            entity.Property(e => e.SifreHash)
-                .HasMaxLength(255)
-                .HasColumnName("Sifre_Hash");
-            entity.Property(e => e.Soyad).HasMaxLength(50);
-            entity.Property(e => e.Telefon).HasMaxLength(20);
-            entity.Property(e => e.TurizmFirmaId).HasColumnName("Turizm_Firma_ID");
-
-            entity.HasOne(d => d.Departman).WithMany(p => p.TblKullanicilars)
-                .HasForeignKey(d => d.DepartmanId)
-                .HasConstraintName("FK__TBL_KULLA__Depar__49C3F6B7");
-
-            entity.HasOne(d => d.Kurum).WithMany(p => p.TblKullanicilars)
-                .HasForeignKey(d => d.KurumId)
-                .HasConstraintName("FK__TBL_KULLA__Kurum__48CFD27E");
-
-            entity.HasOne(d => d.Rol).WithMany(p => p.TblKullanicilars)
-                .HasForeignKey(d => d.RolId)
-                .HasConstraintName("FK__TBL_KULLA__Rol_I__4AB81AF0");
-
-            entity.HasOne(d => d.TurizmFirma).WithMany(p => p.TblKullanicilars)
-                .HasForeignKey(d => d.TurizmFirmaId)
-                .HasConstraintName("FK__TBL_KULLA__Turiz__47DBAE45");
-        });
-
-        modelBuilder.Entity<TblKurumDepartmanlar>(entity =>
-        {
-            entity.HasKey(e => e.DepartmanId).HasName("PK__TBL_KURU__E914C1AD6AD5436F");
-
-            entity.ToTable("TBL_KURUM_DEPARTMANLAR");
-
-            entity.Property(e => e.DepartmanId).HasColumnName("Departman_ID");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.DepartmanAdi)
-                .HasMaxLength(100)
-                .HasColumnName("Departman_Adi");
-            entity.Property(e => e.KurumId).HasColumnName("Kurum_ID");
-
-            entity.HasOne(d => d.Kurum).WithMany(p => p.TblKurumDepartmanlars)
-                .HasForeignKey(d => d.KurumId)
-                .HasConstraintName("FK__TBL_KURUM__Kurum__403A8C7D");
-        });
-
-        modelBuilder.Entity<TblMusteriKurumlar>(entity =>
-        {
-            entity.HasKey(e => e.KurumId).HasName("PK__TBL_MUST__BE1DBCF7915C16B9");
-
-            entity.ToTable("TBL_MUSTERI_KURUMLAR");
-
-            entity.Property(e => e.KurumId).HasColumnName("Kurum_ID");
-            entity.Property(e => e.AdresIl)
-                .HasMaxLength(50)
-                .HasColumnName("Adres_Il");
-            entity.Property(e => e.AdresIlce)
-                .HasMaxLength(50)
-                .HasColumnName("Adres_Ilce");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.KurumAdi)
-                .HasMaxLength(150)
-                .HasColumnName("Kurum_Adi");
-            entity.Property(e => e.KurumTipi)
-                .HasMaxLength(50)
-                .HasColumnName("Kurum_Tipi");
-            entity.Property(e => e.Sektor).HasMaxLength(100);
-            entity.Property(e => e.SozlesmeBaslangic).HasColumnName("Sozlesme_Baslangic");
-            entity.Property(e => e.SozlesmeBitis).HasColumnName("Sozlesme_Bitis");
-            entity.Property(e => e.TurizmFirmaId).HasColumnName("Turizm_Firma_ID");
-            entity.Property(e => e.VergiNo)
-                .HasMaxLength(50)
-                .HasColumnName("Vergi_No");
-
-            entity.HasOne(d => d.TurizmFirma).WithMany(p => p.TblMusteriKurumlars)
-                .HasForeignKey(d => d.TurizmFirmaId)
-                .HasConstraintName("FK__TBL_MUSTE__Turiz__3C69FB99");
-        });
-
-        modelBuilder.Entity<TblRoller>(entity =>
-        {
-            entity.HasKey(e => e.RolId).HasName("PK__TBL_ROLL__795EBD696531067F");
-
-            entity.ToTable("TBL_ROLLER");
-
-            entity.HasIndex(e => e.RolKodu, "UQ__TBL_ROLL__16EADE061098F3CF").IsUnique();
-
-            entity.Property(e => e.RolId).HasColumnName("Rol_ID");
-            entity.Property(e => e.RolAdi)
-                .HasMaxLength(100)
-                .HasColumnName("Rol_Adi");
-            entity.Property(e => e.RolKodu)
-                .HasMaxLength(50)
-                .HasColumnName("Rol_Kodu");
-        });
-
-        modelBuilder.Entity<TblRotaDuraklari>(entity =>
-        {
-            entity.HasKey(e => e.RotaDurakId).HasName("PK__TBL_ROTA__95EE21C6E530398F");
-
-            entity.ToTable("TBL_ROTA_DURAKLARI");
-
-            entity.Property(e => e.RotaDurakId).HasColumnName("Rota_Durak_ID");
-            entity.Property(e => e.DurakId).HasColumnName("Durak_ID");
-            entity.Property(e => e.HedefVarisSaati).HasColumnName("Hedef_Varis_Saati");
-            entity.Property(e => e.KilometreMesafesi)
-                .HasColumnType("decimal(5, 2)")
-                .HasColumnName("Kilometre_Mesafesi");
-            entity.Property(e => e.RotaId).HasColumnName("Rota_ID");
-            entity.Property(e => e.SiraNo).HasColumnName("Sira_No");
-
-            entity.HasOne(d => d.Durak).WithMany(p => p.TblRotaDuraklaris)
-                .HasForeignKey(d => d.DurakId)
-                .HasConstraintName("FK__TBL_ROTA___Durak__619B8048");
-
-            entity.HasOne(d => d.Rota).WithMany(p => p.TblRotaDuraklaris)
-                .HasForeignKey(d => d.RotaId)
-                .HasConstraintName("FK__TBL_ROTA___Rota___60A75C0F");
-        });
-
-        modelBuilder.Entity<TblRotalar>(entity =>
-        {
-            entity.HasKey(e => e.RotaId).HasName("PK__TBL_ROTA__7177918BEDD47233");
-
-            entity.ToTable("TBL_ROTALAR");
-
-            entity.Property(e => e.RotaId).HasColumnName("Rota_ID");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.CalismaGunleri)
-                .HasMaxLength(50)
-                .HasColumnName("Calisma_Gunleri");
-            entity.Property(e => e.KurumId).HasColumnName("Kurum_ID");
-            entity.Property(e => e.OlusturmaTarihi)
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Olusturma_Tarihi");
-            entity.Property(e => e.PlanlananBaslangicSaati).HasColumnName("Planlanan_Baslangic_Saati");
-            entity.Property(e => e.RotaAdi)
-                .HasMaxLength(150)
-                .HasColumnName("Rota_Adi");
-            entity.Property(e => e.Statu)
-                .HasMaxLength(30)
-                .HasDefaultValue("Aktif");
-            entity.Property(e => e.TahminiSureDakika).HasColumnName("Tahmini_Sure_Dakika");
-            entity.Property(e => e.VardiyaTipi)
-                .HasMaxLength(50)
-                .HasColumnName("Vardiya_Tipi");
-            entity.Property(e => e.Yon).HasMaxLength(20);
+                .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Kurum).WithMany(p => p.TblRotalars)
-                .HasForeignKey(d => d.KurumId)
-                .HasConstraintName("FK__TBL_ROTAL__Kurum__5AEE82B9");
+            entity.HasOne(d => d.Client).WithMany(p => p.Tblusers)
+                .HasForeignKey(d => d.ClientId)
+                .HasConstraintName("FKUsersClient");
+
+            entity.HasOne(d => d.Department).WithMany(p => p.Tblusers)
+                .HasForeignKey(d => d.DepartmentId)
+                .HasConstraintName("FKUsersDepartment");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Tblusers)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKUsersRole");
+
+            entity.HasOne(d => d.TransportCompany).WithMany(p => p.Tblusers)
+                .HasForeignKey(d => d.TransportCompanyId)
+                .HasConstraintName("FKUsersTransportCompany");
         });
 
-        modelBuilder.Entity<TblSeferAtamalari>(entity =>
+        modelBuilder.Entity<Tblvehicle>(entity =>
         {
-            entity.HasKey(e => e.AtamaId).HasName("PK__TBL_SEFE__E8AF538CE4927111");
+            entity.HasKey(e => e.Id).HasName("PK__TBLVehic__3214EC074BBC7579");
 
-            entity.ToTable("TBL_SEFER_ATAMALARI");
+            entity.ToTable("TBLVehicles");
 
-            entity.Property(e => e.AtamaId).HasColumnName("Atama_ID");
-            entity.Property(e => e.AracId).HasColumnName("Arac_ID");
-            entity.Property(e => e.SeferId).HasColumnName("Sefer_ID");
-            entity.Property(e => e.ServisYoneticisiId).HasColumnName("Servis_Yoneticisi_ID");
-            entity.Property(e => e.SoforId).HasColumnName("Sofor_ID");
+            entity.HasIndex(e => e.PlateNumber, "UQ__TBLVehic__03692624A7F7B606").IsUnique();
 
-            entity.HasOne(d => d.Arac).WithMany(p => p.TblSeferAtamalaris)
-                .HasForeignKey(d => d.AracId)
-                .HasConstraintName("FK__TBL_SEFER__Arac___70DDC3D8");
-
-            entity.HasOne(d => d.Sefer).WithMany(p => p.TblSeferAtamalaris)
-                .HasForeignKey(d => d.SeferId)
-                .HasConstraintName("FK__TBL_SEFER__Sefer__6FE99F9F");
-
-            entity.HasOne(d => d.ServisYoneticisi).WithMany(p => p.TblSeferAtamalariServisYoneticisis)
-                .HasForeignKey(d => d.ServisYoneticisiId)
-                .HasConstraintName("FK__TBL_SEFER__Servi__72C60C4A");
-
-            entity.HasOne(d => d.Sofor).WithMany(p => p.TblSeferAtamalariSofors)
-                .HasForeignKey(d => d.SoforId)
-                .HasConstraintName("FK__TBL_SEFER__Sofor__71D1E811");
-        });
-
-        modelBuilder.Entity<TblSeferYoklama>(entity =>
-        {
-            entity.HasKey(e => e.YoklamaId).HasName("PK__TBL_SEFE__84BE1CD4096F0A2B");
-
-            entity.ToTable("TBL_SEFER_YOKLAMA");
-
-            entity.Property(e => e.YoklamaId).HasColumnName("Yoklama_ID");
-            entity.Property(e => e.DurakId).HasColumnName("Durak_ID");
-            entity.Property(e => e.IslemZamani)
+            entity.Property(e => e.BrandModel).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Islem_Zamani");
-            entity.Property(e => e.IslemiYapanId).HasColumnName("Islemi_Yapan_ID");
-            entity.Property(e => e.KatilimDurumu)
-                .HasMaxLength(30)
-                .HasColumnName("Katilim_Durumu");
-            entity.Property(e => e.SeferId).HasColumnName("Sefer_ID");
-            entity.Property(e => e.YolcuId).HasColumnName("Yolcu_ID");
-
-            entity.HasOne(d => d.Durak).WithMany(p => p.TblSeferYoklamas)
-                .HasForeignKey(d => d.DurakId)
-                .HasConstraintName("FK__TBL_SEFER__Durak__7C4F7684");
-
-            entity.HasOne(d => d.IslemiYapan).WithMany(p => p.TblSeferYoklamaIslemiYapans)
-                .HasForeignKey(d => d.IslemiYapanId)
-                .HasConstraintName("FK__TBL_SEFER__Islem__7E37BEF6");
-
-            entity.HasOne(d => d.Sefer).WithMany(p => p.TblSeferYoklamas)
-                .HasForeignKey(d => d.SeferId)
-                .HasConstraintName("FK__TBL_SEFER__Sefer__7A672E12");
-
-            entity.HasOne(d => d.Yolcu).WithMany(p => p.TblSeferYoklamaYolcus)
-                .HasForeignKey(d => d.YolcuId)
-                .HasConstraintName("FK__TBL_SEFER__Yolcu__7B5B524B");
-        });
-
-        modelBuilder.Entity<TblSeferler>(entity =>
-        {
-            entity.HasKey(e => e.SeferId).HasName("PK__TBL_SEFE__1344ABD961AFBF4C");
-
-            entity.ToTable("TBL_SEFERLER");
-
-            entity.Property(e => e.SeferId).HasColumnName("Sefer_ID");
-            entity.Property(e => e.BaslamaZamani)
-                .HasColumnType("datetime")
-                .HasColumnName("Baslama_Zamani");
-            entity.Property(e => e.BitisZamani)
-                .HasColumnType("datetime")
-                .HasColumnName("Bitis_Zamani");
-            entity.Property(e => e.RotaId).HasColumnName("Rota_ID");
-            entity.Property(e => e.SeferTarihi).HasColumnName("Sefer_Tarihi");
-            entity.Property(e => e.Statu)
-                .HasMaxLength(30)
-                .HasDefaultValue("Planlandi");
-
-            entity.HasOne(d => d.Rota).WithMany(p => p.TblSeferlers)
-                .HasForeignKey(d => d.RotaId)
-                .HasConstraintName("FK__TBL_SEFER__Rota___6C190EBB");
-        });
-
-        modelBuilder.Entity<TblTurizmFirmalari>(entity =>
-        {
-            entity.HasKey(e => e.TurizmFirmaId).HasName("PK__TBL_TURI__98C5A3AEB7C511CF");
-
-            entity.ToTable("TBL_TURIZM_FIRMALARI");
-
-            entity.HasIndex(e => e.VergiNo, "UQ__TBL_TURI__60E0849FF5C9A326").IsUnique();
-
-            entity.Property(e => e.TurizmFirmaId).HasColumnName("Turizm_Firma_ID");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.FirmaAdi)
-                .HasMaxLength(150)
-                .HasColumnName("Firma_Adi");
-            entity.Property(e => e.IletisimTel)
-                .HasMaxLength(20)
-                .HasColumnName("Iletisim_Tel");
-            entity.Property(e => e.KayitTarihi)
+                .HasColumnType("datetime");
+            entity.Property(e => e.EquipmentFeatures).HasMaxLength(255);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.PlateNumber).HasMaxLength(20);
+            entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Kayit_Tarihi");
-            entity.Property(e => e.VergiNo)
-                .HasMaxLength(50)
-                .HasColumnName("Vergi_No");
-            entity.Property(e => e.YetkiliKisi)
-                .HasMaxLength(100)
-                .HasColumnName("Yetkili_Kisi");
+                .HasColumnType("datetime");
+            entity.Property(e => e.VehicleType).HasMaxLength(50);
+
+            entity.HasOne(d => d.TransportCompany).WithMany(p => p.Tblvehicles)
+                .HasForeignKey(d => d.TransportCompanyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKVehiclesTransportCompany");
         });
 
-        modelBuilder.Entity<TblYolcuIstisnalari>(entity =>
+        modelBuilder.Entity<TblvehicleLocation>(entity =>
         {
-            entity.HasKey(e => e.IstisnaId).HasName("PK__TBL_YOLC__07288D097B6591F2");
+            entity.HasKey(e => e.Id).HasName("PK__TBLVehic__3214EC07ECB8C6B5");
 
-            entity.ToTable("TBL_YOLCU_ISTISNALARI");
+            entity.ToTable("TBLVehicleLocations");
 
-            entity.Property(e => e.IstisnaId).HasColumnName("Istisna_ID");
-            entity.Property(e => e.Aciklama).HasMaxLength(255);
-            entity.Property(e => e.BildirimZamani)
+            entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("Bildirim_Zamani");
-            entity.Property(e => e.IstisnaTarihi).HasColumnName("Istisna_Tarihi");
-            entity.Property(e => e.RotaId).HasColumnName("Rota_ID");
-            entity.Property(e => e.YolcuId).HasColumnName("Yolcu_ID");
+                .HasColumnType("datetime");
+            entity.Property(e => e.Latitude).HasColumnType("decimal(10, 8)");
+            entity.Property(e => e.Longitude).HasColumnType("decimal(11, 8)");
+            entity.Property(e => e.RecordedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Rota).WithMany(p => p.TblYolcuIstisnalaris)
-                .HasForeignKey(d => d.RotaId)
-                .HasConstraintName("FK__TBL_YOLCU__Rota___76969D2E");
+            entity.HasOne(d => d.Trip).WithMany(p => p.TblvehicleLocations)
+                .HasForeignKey(d => d.TripId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKVehicleLocationsTrip");
 
-            entity.HasOne(d => d.Yolcu).WithMany(p => p.TblYolcuIstisnalaris)
-                .HasForeignKey(d => d.YolcuId)
-                .HasConstraintName("FK__TBL_YOLCU__Yolcu__75A278F5");
-        });
-
-        modelBuilder.Entity<TblYolcuRotaTercihleri>(entity =>
-        {
-            entity.HasKey(e => e.TercihId).HasName("PK__TBL_YOLC__5B8A392410191484");
-
-            entity.ToTable("TBL_YOLCU_ROTA_TERCIHLERI");
-
-            entity.Property(e => e.TercihId).HasColumnName("Tercih_ID");
-            entity.Property(e => e.AktifMi)
-                .HasDefaultValue(true)
-                .HasColumnName("Aktif_Mi");
-            entity.Property(e => e.BinisDurakId).HasColumnName("Binis_Durak_ID");
-            entity.Property(e => e.InisDurakId).HasColumnName("Inis_Durak_ID");
-            entity.Property(e => e.RotaId).HasColumnName("Rota_ID");
-            entity.Property(e => e.VarsayilanKullanici)
-                .HasDefaultValue(true)
-                .HasColumnName("Varsayilan_Kullanici");
-            entity.Property(e => e.YolcuId).HasColumnName("Yolcu_ID");
-
-            entity.HasOne(d => d.BinisDurak).WithMany(p => p.TblYolcuRotaTercihleriBinisDuraks)
-                .HasForeignKey(d => d.BinisDurakId)
-                .HasConstraintName("FK__TBL_YOLCU__Binis__66603565");
-
-            entity.HasOne(d => d.InisDurak).WithMany(p => p.TblYolcuRotaTercihleriInisDuraks)
-                .HasForeignKey(d => d.InisDurakId)
-                .HasConstraintName("FK__TBL_YOLCU__Inis___6754599E");
-
-            entity.HasOne(d => d.Rota).WithMany(p => p.TblYolcuRotaTercihleris)
-                .HasForeignKey(d => d.RotaId)
-                .HasConstraintName("FK__TBL_YOLCU__Rota___656C112C");
-
-            entity.HasOne(d => d.Yolcu).WithMany(p => p.TblYolcuRotaTercihleris)
-                .HasForeignKey(d => d.YolcuId)
-                .HasConstraintName("FK__TBL_YOLCU__Yolcu__6477ECF3");
+            entity.HasOne(d => d.Vehicle).WithMany(p => p.TblvehicleLocations)
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKVehicleLocationsVehicle");
         });
 
         OnModelCreatingPartial(modelBuilder);
