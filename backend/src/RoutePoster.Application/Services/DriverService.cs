@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.Drivers;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -21,30 +21,30 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<DriverDto>> GetAllAsync()
         {
-            var entities = await _employeeRepository.FindAsync(e => e.RolId == DriverRoleId);
+            var entities = await _employeeRepository.FindAsync(e => e.RoleId == DriverRoleId);
             return entities.Select(MapToDto);
         }
 
         public async Task<DriverDto?> GetByIdAsync(int id)
         {
             var entity = await _employeeRepository.GetByIdAsync(id);
-            if (entity == null || entity.RolId != DriverRoleId) return null;
+            if (entity == null || entity.RoleId != DriverRoleId) return null;
             return MapToDto(entity);
         }
 
         public async Task<DriverDto> CreateAsync(CreateDriverDto dto)
         {
-            var entity = new TblKullanicilar
+            var entity = new Tbluser
             {
-                RolId = DriverRoleId,
-                KimlikNo = dto.KimlikNo,
-                Ad = dto.Ad,
-                Soyad = dto.Soyad,
+                RoleId = DriverRoleId,
+                IdentityNumber = dto.IdentityNumber,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
                 Email = dto.Email,
-                Telefon = dto.Telefon,
-                SifreHash = dto.SifreHash ?? "default_hash", // Ideally hashed in real app
-                AktifMi = dto.AktifMi ?? true,
-                OlusturmaTarihi = DateTime.UtcNow
+                Phone = dto.Phone,
+                PasswordHash = dto.PasswordHash ?? "default_hash", 
+                IsActive = dto.IsActive ?? true,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _employeeRepository.AddAsync(entity);
@@ -56,14 +56,14 @@ namespace RoutePoster.Application.Services
         public async Task UpdateAsync(int id, UpdateDriverDto dto)
         {
             var entity = await _employeeRepository.GetByIdAsync(id);
-            if (entity != null && entity.RolId == DriverRoleId)
+            if (entity != null && entity.RoleId == DriverRoleId)
             {
-                entity.KimlikNo = dto.KimlikNo;
-                entity.Ad = dto.Ad;
-                entity.Soyad = dto.Soyad;
+                entity.IdentityNumber = dto.IdentityNumber;
+                entity.FirstName = dto.FirstName;
+                entity.LastName = dto.LastName;
                 entity.Email = dto.Email;
-                entity.Telefon = dto.Telefon;
-                entity.AktifMi = dto.AktifMi;
+                entity.Phone = dto.Phone;
+                entity.IsActive = dto.IsActive;
 
                 _employeeRepository.Update(entity);
                 await _employeeRepository.SaveChangesAsync();
@@ -73,24 +73,24 @@ namespace RoutePoster.Application.Services
         public async Task DeleteAsync(int id)
         {
             var entity = await _employeeRepository.GetByIdAsync(id);
-            if (entity != null && entity.RolId == DriverRoleId)
+            if (entity != null && entity.RoleId == DriverRoleId)
             {
                 _employeeRepository.Remove(entity);
                 await _employeeRepository.SaveChangesAsync();
             }
         }
 
-        private DriverDto MapToDto(TblKullanicilar entity)
+        private DriverDto MapToDto(Tbluser entity)
         {
             return new DriverDto
             {
-                KullaniciId = entity.KullaniciId,
-                KimlikNo = entity.KimlikNo,
-                Ad = entity.Ad,
-                Soyad = entity.Soyad,
+                UserId = entity.Id,
+                IdentityNumber = entity.IdentityNumber,
+                FirstName = entity.FirstName,
+                LastName = entity.LastName,
                 Email = entity.Email,
-                Telefon = entity.Telefon,
-                AktifMi = entity.AktifMi
+                Phone = entity.Phone,
+                IsActive = entity.IsActive
             };
         }
     }

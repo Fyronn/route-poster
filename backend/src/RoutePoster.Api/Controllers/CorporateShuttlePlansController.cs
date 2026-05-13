@@ -19,18 +19,18 @@ namespace RoutePoster.Api.Controllers
         [HttpPost("submit")]
         public async Task<IActionResult> SubmitPlan(int clientId)
         {
-            // Senaryo: Şirket yöneticisi planı ABC Turizm'e gönderiyor.
-            // Bu client'a ait statüsü "Talep Edildi" olan rotaları "Plan Gönderildi" olarak güncelliyoruz.
+            // Scenario: Company manager sends the plan to ABC Tourism.
+            // We update the routes belonging to this client with status "Requested" to "Plan Sent".
             var requests = await _routeRequestService.GetByClientIdAsync(clientId);
             foreach (var req in requests)
             {
-                if (req.Statu == "Talep Edildi")
+                if (req.Status == "Requested")
                 {
-                    await _routeRequestService.UpdateStatusAsync(req.RotaId, "Plan Gönderildi");
+                    await _routeRequestService.UpdateStatusAsync(req.RouteId, "Plan Sent");
                 }
             }
 
-            return Ok(new { Message = "Plan başarıyla ABC Turizm'e gönderildi." });
+            return Ok(new { Message = "Plan successfully sent to ABC Tourism." });
         }
     }
 }

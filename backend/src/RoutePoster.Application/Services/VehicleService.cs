@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.Vehicles;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -32,16 +32,16 @@ namespace RoutePoster.Application.Services
 
         public async Task<VehicleDto> CreateAsync(CreateVehicleDto dto)
         {
-            var entity = new TblAraclar
+            var entity = new Tblvehicle
             {
-                TurizmFirmaId = dto.TurizmFirmaId,
-                Plaka = dto.Plaka,
-                Kapasite = dto.Kapasite,
-                MarkaModel = dto.MarkaModel,
-                UretimYili = dto.UretimYili,
-                AracTipi = dto.AracTipi,
-                DonanimOzellikleri = dto.DonanimOzellikleri,
-                AktifMi = dto.AktifMi ?? true
+                TransportCompanyId = dto.TransportCompanyId ?? 1,
+                PlateNumber = dto.PlateNumber,
+                Capacity = dto.Capacity,
+                BrandModel = dto.BrandModel,
+                ProductionYear = dto.ProductionYear,
+                VehicleType = dto.VehicleType,
+                EquipmentFeatures = dto.EquipmentFeatures,
+                IsActive = dto.IsActive ?? true
             };
 
             await _vehicleRepository.AddAsync(entity);
@@ -55,13 +55,13 @@ namespace RoutePoster.Application.Services
             var entity = await _vehicleRepository.GetByIdAsync(id);
             if (entity != null)
             {
-                entity.Plaka = dto.Plaka;
-                entity.Kapasite = dto.Kapasite;
-                entity.MarkaModel = dto.MarkaModel;
-                entity.UretimYili = dto.UretimYili;
-                entity.AracTipi = dto.AracTipi;
-                entity.DonanimOzellikleri = dto.DonanimOzellikleri;
-                entity.AktifMi = dto.AktifMi;
+                entity.PlateNumber = dto.PlateNumber;
+                entity.Capacity = dto.Capacity;
+                entity.BrandModel = dto.BrandModel;
+                entity.ProductionYear = dto.ProductionYear;
+                entity.VehicleType = dto.VehicleType;
+                entity.EquipmentFeatures = dto.EquipmentFeatures;
+                entity.IsActive = dto.IsActive;
 
                 _vehicleRepository.Update(entity);
                 await _vehicleRepository.SaveChangesAsync();
@@ -78,19 +78,19 @@ namespace RoutePoster.Application.Services
             }
         }
 
-        private VehicleDto MapToDto(TblAraclar entity)
+        private VehicleDto MapToDto(Tblvehicle entity)
         {
             return new VehicleDto
             {
-                AracId = entity.AracId,
-                TurizmFirmaId = entity.TurizmFirmaId,
-                Plaka = entity.Plaka,
-                Kapasite = entity.Kapasite,
-                MarkaModel = entity.MarkaModel,
-                UretimYili = entity.UretimYili,
-                AracTipi = entity.AracTipi,
-                DonanimOzellikleri = entity.DonanimOzellikleri,
-                AktifMi = entity.AktifMi
+                VehicleId = entity.Id,
+                TransportCompanyId = entity.TransportCompanyId,
+                PlateNumber = entity.PlateNumber,
+                Capacity = entity.Capacity,
+                BrandModel = entity.BrandModel,
+                ProductionYear = entity.ProductionYear,
+                VehicleType = entity.VehicleType,
+                EquipmentFeatures = entity.EquipmentFeatures,
+                IsActive = entity.IsActive
             };
         }
     }

@@ -21,9 +21,9 @@ namespace RoutePoster.Api.Controllers
         [HttpPut("route/{routeId}/status")]
         public async Task<IActionResult> UpdateRouteStatus(int routeId, [FromBody] UpdateShuttlePlanStatusDto dto)
         {
-            // ABC Turizm admini, gelen rotaları onaylar veya reddeder.
-            await _routeRequestService.UpdateStatusAsync(routeId, dto.Statu);
-            return Ok(new { Message = $"Rota statüsü '{dto.Statu}' olarak güncellendi." });
+            // ABC Tourism admin approves or rejects the incoming routes.
+            await _routeRequestService.UpdateStatusAsync(routeId, dto.Status);
+            return Ok(new { Message = $"Route status updated to '{dto.Status}'." });
         }
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RouteRequestDto>>> GetAll()

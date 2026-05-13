@@ -7,17 +7,17 @@ using Microsoft.IdentityModel.Tokens;
 using RoutePoster.Application.DTOs.Auth;
 using RoutePoster.Application.Services.Interfaces;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure; // For TblKullanicilar
+using RoutePoster.Domain.Entities; // For Tbluser
 using BCrypt.Net;
 
 namespace RoutePoster.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IGenericRepository<TblKullanicilar> _userRepository;
+    private readonly IGenericRepository<Tbluser> _userRepository;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IGenericRepository<TblKullanicilar> userRepository, IConfiguration configuration)
+    public AuthService(IGenericRepository<Tbluser> userRepository, IConfiguration configuration)
     {
         _userRepository = userRepository;
         _configuration = configuration;
@@ -28,7 +28,7 @@ public class AuthService : IAuthService
         var users = await _userRepository.FindAsync(u => u.Email == loginDto.Email);
         var user = users.FirstOrDefault();
 
-        if (user == null || string.IsNullOrEmpty(user.SifreHash) || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.SifreHash))
+        if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
         {
             return null;
         }
@@ -44,50 +44,50 @@ public class AuthService : IAuthService
             return null;
         }
 
-        var user = new TblKullanicilar
+        var user = new Tbluser
         {
-            Ad = registerDto.Ad,
-            Soyad = registerDto.Soyad,
+            FirstName = registerDto.FirstName,
+            LastName = registerDto.LastName,
             Email = registerDto.Email,
-            SifreHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
-            RolId = registerDto.RolId,
-            KurumId = registerDto.KurumId,
-            AktifMi = true,
-            OlusturmaTarihi = DateTime.Now
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+            RoleId = registerDto.RoleId ?? 0,
+            ClientId = registerDto.ClientId,
+            IsActive = true,
+            CreatedAt = DateTime.Now
         };
 
         await _userRepository.AddAsync(user);
         await _userRepository.SaveChangesAsync();
 
-        return CreateAuthResponse(user, registerDto.RolId, registerDto.KurumId);
+        return CreateAuthResponse(user, registerDto.RoleId, registerDto.ClientId);
     }
 
     private AuthResponseDto CreateAuthResponse(
-        TblKullanicilar user,
-        int? fallbackRolId = null,
-        int? fallbackKurumId = null)
+        Tbluser user,
+        int? fallbackRoleId = null,
+        int? fallbackClientId = null)
     {
-        var rolId = user.RolId ?? fallbackRolId;
-        var kurumId = user.KurumId ?? fallbackKurumId;
-        var token = GenerateJwtToken(user, rolId, kurumId);
+        var roleId = user.RoleId != 0 ? user.RoleId : (fallbackRoleId ?? 0);
+        var clientId = user.ClientId ?? fallbackClientId;
+        var token = GenerateJwtToken(user, roleId, clientId);
 
         return new AuthResponseDto
         {
             Token = token,
             User = new UserDto
             {
-                KullaniciId = user.KullaniciId,
-                KurumId = kurumId,
-                RolId = rolId,
-                Ad = user.Ad,
-                Soyad = user.Soyad,
+                UserId = user.Id,
+                ClientId = clientId,
+                RoleId = roleId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
                 Email = user.Email ?? "",
-                RolAdi = user.Rol?.RolAdi ?? ResolveRoleName(rolId)
+                RoleName = user.Role?.RoleName ?? ResolveRoleName(roleId)
             }
         };
     }
 
-    private string GenerateJwtToken(TblKullanicilar user, int? rolId, int? kurumId)
+    private string GenerateJwtToken(Tbluser user, int? roleId, int? clientId)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "SUPER_SECRET_KEY_THAT_IS_LONG_ENOUGH_12345");
@@ -95,7 +95,7 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(BuildClaims(user, rolId, kurumId)),
+            Subject = new ClaimsIdentity(BuildClaims(user, roleId, clientId)),
             Expires = DateTime.UtcNow.AddDays(7),
             Issuer = jwtSettings["Issuer"],
             Audience = jwtSettings["Audience"],
@@ -106,34 +106,34 @@ public class AuthService : IAuthService
         return tokenHandler.WriteToken(token);
     }
 
-    private static IEnumerable<Claim> BuildClaims(TblKullanicilar user, int? rolId, int? kurumId)
+    private static IEnumerable<Claim> BuildClaims(Tbluser user, int? roleId, int? clientId)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.KullaniciId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
-            new Claim(ClaimTypes.Role, user.Rol?.RolKodu ?? rolId?.ToString() ?? "User")
+            new Claim(ClaimTypes.Role, user.Role?.RoleCode ?? roleId?.ToString() ?? "User")
         };
 
-        if (rolId.HasValue)
+        if (roleId.HasValue)
         {
-            claims.Add(new Claim("rolId", rolId.Value.ToString()));
+            claims.Add(new Claim("roleId", roleId.Value.ToString()));
         }
 
-        if (kurumId.HasValue)
+        if (clientId.HasValue)
         {
-            claims.Add(new Claim("kurumId", kurumId.Value.ToString()));
+            claims.Add(new Claim("clientId", clientId.Value.ToString()));
         }
 
         return claims;
     }
 
-    private static string? ResolveRoleName(int? rolId)
+    private static string? ResolveRoleName(int? roleId)
     {
-        return rolId switch
+        return roleId switch
         {
-            6 => "Servis Yoneticisi",
-            5 => "Surucu",
+            6 => "Transport Manager",
+            5 => "Driver",
             1 => "Admin",
             _ => null
         };

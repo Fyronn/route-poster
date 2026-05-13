@@ -36,7 +36,7 @@ namespace RoutePoster.Api.Controllers
         public async Task<ActionResult<VehicleDto>> Create([FromBody] CreateVehicleDto dto)
         {
             var createdVehicle = await _vehicleService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = createdVehicle.AracId }, createdVehicle);
+            return CreatedAtAction(nameof(GetById), new { id = createdVehicle.VehicleId }, createdVehicle);
         }
 
         [HttpPut("{id}")]

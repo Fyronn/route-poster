@@ -27,7 +27,7 @@ namespace RoutePoster.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<RouteRequestDto>> Create(int clientId, [FromBody] CreateRouteRequestDto dto)
         {
-            dto.KurumId = clientId;
+            dto.ClientId = clientId;
             var createdRequest = await _routeRequestService.CreateAsync(dto);
             return Ok(createdRequest);
         }

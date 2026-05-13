@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.CorporateShuttle.Employees;
 using RoutePoster.Application.Services.Interfaces;
+using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
-using RoutePoster.Infrastructure;
 
 namespace RoutePoster.Application.Services
 {
@@ -20,7 +20,7 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<EmployeeDto>> GetByClientIdAsync(int clientId)
         {
-            var entities = await _employeeRepository.FindAsync(e => e.KurumId == clientId);
+            var entities = await _employeeRepository.FindAsync(e => e.ClientId == clientId);
             return entities.Select(MapToDto);
         }
 
@@ -33,16 +33,17 @@ namespace RoutePoster.Application.Services
 
         public async Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto)
         {
-            var entity = new TblKullanicilar
+            var entity = new Tbluser
             {
-                KurumId = dto.KurumId,
-                Ad = dto.Ad,
-                Soyad = dto.Soyad,
+                ClientId = dto.ClientId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
                 Email = dto.Email,
-                Telefon = dto.Telefon,
-                KimlikNo = dto.KimlikNo,
-                AktifMi = true,
-                OlusturmaTarihi = DateTime.UtcNow
+                Phone = dto.Phone,
+                IdentityNumber = dto.IdentityNumber,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                RoleId = 4 // Default employee role if not specified
             };
 
             await _employeeRepository.AddAsync(entity);
@@ -51,18 +52,18 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
-        private EmployeeDto MapToDto(TblKullanicilar entity)
+        private EmployeeDto MapToDto(Tbluser entity)
         {
             return new EmployeeDto
             {
-                KullaniciId = entity.KullaniciId,
-                KurumId = entity.KurumId,
-                Ad = entity.Ad,
-                Soyad = entity.Soyad,
+                UserId = entity.Id,
+                ClientId = entity.ClientId,
+                FirstName = entity.FirstName,
+                LastName = entity.LastName,
                 Email = entity.Email,
-                Telefon = entity.Telefon,
-                KimlikNo = entity.KimlikNo,
-                AktifMi = entity.AktifMi
+                Phone = entity.Phone,
+                IdentityNumber = entity.IdentityNumber,
+                IsActive = entity.IsActive
             };
         }
     }

@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
-namespace RoutePoster.Infrastructure;
+namespace RoutePoster.Domain.Entities;
 
 public partial class TblpassengerAbsence
 {

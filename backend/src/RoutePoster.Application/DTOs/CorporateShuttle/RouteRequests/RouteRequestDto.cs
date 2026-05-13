@@ -4,15 +4,15 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests
 {
     public class RouteRequestDto
     {
-        public int RotaId { get; set; }
-        public int? KurumId { get; set; }
-        public string? RotaAdi { get; set; }
-        public string? Statu { get; set; } // "Talep Edildi", "Plan Gönderildi", "Onaylandı"
-        public string? VardiyaTipi { get; set; }
-        public string? Yon { get; set; }
-        public string? CalismaGunleri { get; set; }
-        public TimeOnly? PlanlananBaslangicSaati { get; set; }
-        public int? TahminiSureDakika { get; set; }
-        public bool? AktifMi { get; set; }
+        public int RouteId { get; set; }
+        public int? ClientId { get; set; }
+        public string? RouteName { get; set; }
+        public string? Status { get; set; } // "Requested", "Plan Sent", "Approved"
+        public string? ShiftType { get; set; }
+        public string? Direction { get; set; }
+        public string? OperatingDays { get; set; }
+        public TimeOnly? PlannedStartTime { get; set; }
+        public int? EstimatedDurationMinutes { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

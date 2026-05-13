@@ -36,7 +36,7 @@ namespace RoutePoster.Api.Controllers
         public async Task<ActionResult<DriverDto>> Create([FromBody] CreateDriverDto dto)
         {
             var createdDriver = await _driverService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = createdDriver.KullaniciId }, createdDriver);
+            return CreatedAtAction(nameof(GetById), new { id = createdDriver.UserId }, createdDriver);
         }
 
         [HttpPut("{id}")]

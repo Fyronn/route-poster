@@ -36,7 +36,7 @@ namespace RoutePoster.Api.Controllers
         public async Task<ActionResult<ClientDto>> Create([FromBody] CreateClientDto dto)
         {
             var createdClient = await _clientService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = createdClient.KurumId }, createdClient);
+            return CreatedAtAction(nameof(GetById), new { id = createdClient.ClientId }, createdClient);
         }
 
         [HttpPut("{id}")]

@@ -4,11 +4,11 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests
 {
     public class CreateRouteRequestDto
     {
-        public int? KurumId { get; set; }
-        public string? RotaAdi { get; set; }
-        public string? VardiyaTipi { get; set; }
-        public string? Yon { get; set; }
-        public string? CalismaGunleri { get; set; }
-        public TimeOnly? PlanlananBaslangicSaati { get; set; }
+        public int? ClientId { get; set; }
+        public string? RouteName { get; set; }
+        public string? ShiftType { get; set; }
+        public string? Direction { get; set; }
+        public string? OperatingDays { get; set; }
+        public TimeOnly? PlannedStartTime { get; set; }
     }
 }

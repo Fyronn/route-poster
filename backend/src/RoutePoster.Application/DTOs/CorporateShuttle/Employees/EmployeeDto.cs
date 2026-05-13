@@ -4,13 +4,13 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.Employees
 {
     public class EmployeeDto
     {
-        public int KullaniciId { get; set; }
-        public int? KurumId { get; set; }
-        public string Ad { get; set; } = null!;
-        public string Soyad { get; set; } = null!;
+        public int UserId { get; set; }
+        public int? ClientId { get; set; }
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
         public string? Email { get; set; }
-        public string? Telefon { get; set; }
-        public string? KimlikNo { get; set; }
-        public bool? AktifMi { get; set; }
+        public string? Phone { get; set; }
+        public string? IdentityNumber { get; set; }
+        public bool? IsActive { get; set; }
     }
 }
