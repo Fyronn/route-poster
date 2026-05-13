@@ -118,14 +118,14 @@ export function CorporateRouteRequestsPage({
 
   function addStop(stop: CorporateStopRequest) {
     setStopPlan((current) => {
-      if (current.some((item) => item.stopId === stop.id)) return current;
+      if (current.some((item) => item.stopId === stop.stopId)) return current;
 
       return [
         ...current,
         {
           sequence: current.length + 1,
-          stopId: stop.id,
-          stopName: stop.stopName,
+          stopId: stop.stopId,
+          stopName: stop.stopName || "",
         },
       ];
     });
@@ -175,8 +175,8 @@ export function CorporateRouteRequestsPage({
         plannedStartTime: `${form.plannedStartTime}:00`,
         plannedStops: stopPlan,
         routeName: form.routeName,
-        shift: form.shift,
-        workingDays: form.workingDays,
+        shiftType: form.shift,
+        operatingDays: form.workingDays,
       });
 
       setItems((current) => [createdRequest, ...current]);
@@ -223,13 +223,13 @@ export function CorporateRouteRequestsPage({
             hint="ABC Turizm incelemesi bekliyor"
             icon={Route}
             label="Gonderilen"
-            value={items.filter((request) => request.status === "submitted").length}
+            value={items.filter((request) => request.status?.toLowerCase() === "submitted").length}
           />
           <MetricCard
             hint="Operasyona aktarilabilir"
             icon={Route}
             label="Onayli Rota"
-            value={items.filter((request) => request.status === "approved").length}
+            value={items.filter((request) => request.status?.toLowerCase() === "approved").length}
           />
         </div>
 
@@ -265,26 +265,26 @@ export function CorporateRouteRequestsPage({
               {items.map((request) => (
                 <tr
                   className="border-b border-slate-100 last:border-0"
-                  key={request.id}
+                  key={request.routeId}
                 >
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">
-                      {request.routeName}
+                      {request.routeName || "-"}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {request.clientName}
+                      {request.clientName || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    <p>{request.startPoint}</p>
+                    <p>{request.startPoint || "-"}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {request.endPoint}
+                      {request.endPoint || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4">
-                    <Badge variant="neutral">{request.shift}</Badge>
+                    <Badge variant="neutral">{request.shiftType || "-"}</Badge>
                     <p className="mt-2 text-xs text-slate-500">
-                      {request.workingDays} / {request.plannedStartTime}
+                      {request.operatingDays || "-"} / {request.plannedStartTime || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
@@ -300,15 +300,15 @@ export function CorporateRouteRequestsPage({
                         ))}
                       </div>
                     ) : (
-                      `${request.stopCount} durak / ${request.employeeCount} calisan`
+                      `${request.stopCount || 0} durak / ${request.employeeCount || 0} calisan`
                     )}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {request.estimatedDistanceKm} km /{" "}
-                    {request.estimatedDurationMin} dk
+                    {request.estimatedDistanceKm || 0} km /{" "}
+                    {request.estimatedDurationMinutes || 0} dk
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={request.status} />
+                    <StatusBadge status={request.status?.toLowerCase() || "requested"} />
                   </td>
                 </tr>
               ))}
@@ -392,14 +392,14 @@ export function CorporateRouteRequestsPage({
                       {stops.length ? (
                         stops.map((stop) => {
                           const isSelected = stopPlan.some(
-                            (item) => item.stopId === stop.id,
+                            (item) => item.stopId === stop.stopId,
                           );
 
                           return (
                             <button
                               className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
                               disabled={isSelected}
-                              key={stop.id}
+                              key={stop.stopId}
                               onClick={() => addStop(stop)}
                               type="button"
                             >

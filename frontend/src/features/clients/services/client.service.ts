@@ -8,87 +8,24 @@ import { SERVICE_MANAGER_ROLE_ID } from "@/features/auth/constants";
 import { registerUser } from "@/features/auth/services/auth.service";
 
 import { clientsMockData } from "../constants";
-import type { Client, ClientDto, CreateClientPayload } from "../types";
+import type { Client, CreateClientPayload } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
 };
 
-function mapTransportTypeLabel(value?: string | null) {
-  if (
-    value === "CorporateShuttle" ||
-    value === "corporate-shuttle" ||
-    value === "Corporate"
-  ) {
-    return "Şirket personel servisi";
-  }
-
-  return value ?? "Şirket personel servisi";
-}
-
-function mapSetupModel(value?: string | null): Client["setupModel"] {
-  if (value === "ABC Managed") return "abc-managed";
-  if (value === "Hybrid") return "hybrid";
-  return "company-managed";
-}
-
-function mapClientDto(dto: ClientDto): Client {
-  const numericId = dto.KurumId ?? dto.kurumId ?? 0;
-  const name = dto.KurumAdi ?? dto.kurumAdi ?? "İsimsiz Client";
-  const city = dto.AdresIl ?? dto.adresIl ?? "-";
-  const district = dto.AdresIlce ?? dto.adresIlce ?? "-";
-  const address =
-    [district, city].filter((item) => item && item !== "-").join(", ") || "-";
-
-  return {
-    id: `CLT-${String(numericId).padStart(3, "0")}`,
-    numericId,
-    name,
-    contactName: dto.YetkiliKisi ?? dto.yetkiliKisi ?? "-",
-    phone: dto.Telefon ?? dto.telefon ?? "-",
-    email: dto.Email ?? dto.email ?? "-",
-    address,
-    city,
-    district,
-    taxNumber: dto.VergiNo ?? dto.vergiNo ?? undefined,
-    transportType: "corporate-shuttle",
-    transportTypeLabel: mapTransportTypeLabel(dto.KurumTipi ?? dto.kurumTipi),
-    setupModel: mapSetupModel(dto.KurulumTercihi ?? dto.kurulumTercihi),
-    status: (dto.AktifMi ?? dto.aktifMi) === false ? "inactive" : "active",
-    setupStatus: "pending",
-    employeeCount: 0,
-    stopCount: 0,
-    routeRequestCount: 0,
-  };
-}
-
-function toCreateClientDto(payload: CreateClientPayload) {
-  const contactName = `${payload.contactFirstName} ${payload.contactLastName}`.trim();
-
-  return {
-    kurumAdi: payload.companyName,
-    kurumTipi: "Corporate",
-    vergiNo: payload.taxNumber || null,
-    adresIl: payload.city,
-    adresIlce: payload.district,
-    yetkiliKisi: contactName,
-    telefon: payload.phone,
-    email: payload.email,
-    kurulumTercihi:
-      payload.setupModel === "abc-managed"
-        ? "ABC Managed"
-        : payload.setupModel === "hybrid"
-          ? "Hybrid"
-          : "Company Managed",
-  };
-}
-
 export async function getClients(options: ServiceOptions = {}) {
   try {
-    const clients = await getRequest<ClientDto[]>("/api/clients", {
+    const clients = await getRequest<Client[]>("/api/clients", {
       authToken: options.authToken,
     });
-    return clients.map(mapClientDto);
+    return clients.map((client) => ({
+      ...client,
+      setupStatus: client.setupStatus || "pending",
+      employeeCount: client.employeeCount || 0,
+      stopCount: client.stopCount || 0,
+      routeRequestCount: client.routeRequestCount || 0,
+    }));
   } catch {
     return clientsMockData;
   }
@@ -99,31 +36,54 @@ export async function getClientById(
   options: ServiceOptions = {},
 ) {
   try {
-    const client = await getRequest<ClientDto>(`/api/clients/${clientId}`, {
+    const client = await getRequest<Client>(`/api/clients/${clientId}`, {
       authToken: options.authToken,
     });
-    return mapClientDto(client);
+    return {
+      ...client,
+      setupStatus: client.setupStatus || "pending",
+      employeeCount: client.employeeCount || 0,
+      stopCount: client.stopCount || 0,
+      routeRequestCount: client.routeRequestCount || 0,
+    };
   } catch {
     return (
-      clientsMockData.find(
-        (client) =>
-          client.numericId === Number(clientId) || client.id === clientId,
-      ) ?? clientsMockData[0]
+      clientsMockData.find((c) => c.clientId === Number(clientId)) ??
+      clientsMockData[0]
     );
   }
 }
 
 export async function createClient(payload: CreateClientPayload) {
-  const createdClient = await postRequest<ClientDto>(
+  const contactName = `${payload.contactFirstName} ${payload.contactLastName}`.trim();
+
+  const createDto = {
+    clientName: payload.companyName,
+    clientType: "Corporate",
+    taxNumber: payload.taxNumber || null,
+    city: payload.city,
+    district: payload.district,
+    authorizedPerson: contactName,
+    phone: payload.phone,
+    email: payload.email,
+    setupPreference:
+      payload.setupModel === "abc-managed"
+        ? "ABC Managed"
+        : payload.setupModel === "hybrid"
+          ? "Hybrid"
+          : "Company Managed",
+  };
+
+  const createdClient = await postRequest<Client>(
     "/api/clients",
-    toCreateClientDto(payload),
+    createDto,
   );
-  const client = mapClientDto(createdClient);
-  const clientId = client.numericId;
+  
+  const clientId = createdClient.clientId;
 
   if (!clientId) {
     throw new Error(
-      "Client olusturuldu ancak backend kurumId dondurmedi. Yetkili kullanici kuruma baglanamadi.",
+      "Client olusturuldu ancak backend clientId dondurmedi. Yetkili kullanici kuruma baglanamadi.",
     );
   }
 
@@ -136,7 +96,13 @@ export async function createClient(payload: CreateClientPayload) {
     roleId: SERVICE_MANAGER_ROLE_ID,
   });
 
-  return client;
+  return {
+    ...createdClient,
+    setupStatus: "pending" as const,
+    employeeCount: 0,
+    stopCount: 0,
+    routeRequestCount: 0,
+  };
 }
 
 export async function updateClient(

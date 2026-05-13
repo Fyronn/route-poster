@@ -2,7 +2,7 @@ import type { CorporateStopRequest } from "./types";
 
 export const corporateStopsMockData: CorporateStopRequest[] = [
   {
-    id: 301,
+    stopId: 301,
     stopName: "Kozyatağı Metro",
     address: "Kozyatağı Metro çıkışı, Kadıköy",
     district: "Kadıköy",
@@ -11,9 +11,10 @@ export const corporateStopsMockData: CorporateStopRequest[] = [
     status: "requested",
     latitude: 40.9701,
     longitude: 29.0977,
+    isActive: true,
   },
   {
-    id: 302,
+    stopId: 302,
     stopName: "Çakmak Köprüsü",
     address: "Alemdağ Cad. Çakmak, Ümraniye",
     district: "Ümraniye",
@@ -22,9 +23,10 @@ export const corporateStopsMockData: CorporateStopRequest[] = [
     status: "approved",
     latitude: 41.0205,
     longitude: 29.1288,
+    isActive: true,
   },
   {
-    id: 303,
+    stopId: 303,
     stopName: "Yenibosna Metrobüs",
     address: "D-100 Yan Yol, Bahçelievler",
     district: "Bahçelievler",
@@ -32,5 +34,6 @@ export const corporateStopsMockData: CorporateStopRequest[] = [
     employeeCount: 31,
     status: "revision_requested",
     operatorNote: "Durak noktası yoğun trafik nedeniyle 120m taşınmalı.",
+    isActive: true,
   },
 ];

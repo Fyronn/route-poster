@@ -153,7 +153,7 @@ export function ClientCreateWizard() {
 
     try {
       const client = await createClient(formValues);
-      router.push(`/admin/clients/${client.numericId}/setup`);
+      router.push(`/admin/clients/${client.clientId}/setup`);
     } catch (error) {
       setSubmitError(
         error instanceof Error

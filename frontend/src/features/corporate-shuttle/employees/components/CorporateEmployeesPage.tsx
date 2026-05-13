@@ -123,13 +123,13 @@ export function CorporateEmployeesPage({
             hint="Departman bazlı gruplama için"
             icon={Users}
             label="Aktif Çalışan"
-            value={items.filter((employee) => employee.status === "active").length}
+            value={items.filter((employee) => employee.isActive).length}
           />
           <MetricCard
             hint="Adres veya durak bilgisi bekleyen"
             icon={Users}
             label="Bekleyen"
-            value={items.filter((employee) => employee.status === "pending").length}
+            value={items.filter((employee) => !employee.isActive).length}
           />
         </div>
 
@@ -165,30 +165,30 @@ export function CorporateEmployeesPage({
               {items.map((employee) => (
                 <tr
                   className="border-b border-slate-100 last:border-0"
-                  key={employee.id}
+                  key={employee.employeeId}
                 >
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">
-                      {employee.fullName}
+                      {employee.firstName} {employee.lastName}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {employee.email}
+                      {employee.email || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {employee.department}
+                    {employee.department || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {employee.phone}
+                    {employee.phone || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {employee.homeDistrict}
+                    {employee.district || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {employee.preferredStop}
+                    {employee.preferredStop || "-"}
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={employee.status} />
+                    <StatusBadge status={employee.isActive ? "active" : "pending"} />
                   </td>
                 </tr>
               ))}

@@ -1,31 +1,11 @@
-export type VehicleDto = {
-  AracId?: number;
-  aracId?: number;
-  TurizmFirmaId?: number | null;
-  turizmFirmaId?: number | null;
-  Plaka?: string;
-  plaka?: string;
-  Kapasite?: number;
-  kapasite?: number;
-  MarkaModel?: string | null;
-  markaModel?: string | null;
-  UretimYili?: number | null;
-  uretimYili?: number | null;
-  AracTipi?: string | null;
-  aracTipi?: string | null;
-  DonanimOzellikleri?: string | null;
-  donanimOzellikleri?: string | null;
-  AktifMi?: boolean | null;
-  aktifMi?: boolean | null;
-};
-
 export type Vehicle = {
-  id: number;
-  plate: string;
+  vehicleId: number;
+  transportCompanyId?: number | null;
+  plateNumber?: string | null;
   capacity: number;
-  model: string;
-  productionYear?: number;
-  vehicleType: string;
-  equipment?: string;
-  status: "active" | "inactive";
+  brandModel?: string | null;
+  productionYear?: number | null;
+  vehicleType?: string | null;
+  equipmentFeatures?: string | null;
+  isActive?: boolean | null;
 };

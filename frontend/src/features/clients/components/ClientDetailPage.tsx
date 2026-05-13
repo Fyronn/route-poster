@@ -52,33 +52,33 @@ export function ClientDetailPage({ client }: { client: Client }) {
       action={
         <Link
           className={buttonVariants({ variant: "secondary" })}
-          href={`/admin/clients/${client.numericId}/setup`}
+          href={`/admin/clients/${client.clientId}/setup`}
         >
           <ClipboardList className="h-4 w-4" />
           Setup Checklist
         </Link>
       }
       description="Genel client bilgileri burada tutulur; corporate shuttle iş akışları kendi modül sayfalarında yönetilir."
-      title={client.name}
+      title={client.clientName}
     >
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <MetricCard
           hint="Servis kullanacak kayıtlı çalışan"
           icon={Users}
           label="Çalışan"
-          value={client.employeeCount}
+          value={client.employeeCount || 0}
         />
         <MetricCard
           hint="Şirket yöneticisi tarafından önerilen"
           icon={MapPin}
           label="Durak Talebi"
-          value={client.stopCount}
+          value={client.stopCount || 0}
         />
         <MetricCard
           hint="Onay akışında veya operasyona aktarılmış"
           icon={Route}
           label="Rota Talebi"
-          value={client.routeRequestCount}
+          value={client.routeRequestCount || 0}
         />
       </div>
 
@@ -94,14 +94,14 @@ export function ClientDetailPage({ client }: { client: Client }) {
                 <p className="text-xs font-semibold uppercase text-slate-500">
                   Client ID
                 </p>
-                <p className="mt-1 font-semibold text-slate-950">{client.id}</p>
+                <p className="mt-1 font-semibold text-slate-950">CLT-{String(client.clientId).padStart(3, "0")}</p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">
                   Taşıma Tipi
                 </p>
                 <div className="mt-2">
-                  <Badge variant="teal">{client.transportTypeLabel}</Badge>
+                  <Badge variant="teal">Şirket personel servisi</Badge>
                 </div>
               </div>
               <div className="rounded-2xl bg-slate-50 p-4">
@@ -109,7 +109,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
                   Yetkili
                 </p>
                 <p className="mt-1 font-semibold text-slate-950">
-                  {client.contactName}
+                  {client.authorizedPerson || "-"}
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-4">
@@ -117,7 +117,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
                   Kurulum Durumu
                 </p>
                 <div className="mt-2">
-                  <StatusBadge status={client.setupStatus} />
+                  <StatusBadge status={client.setupStatus || "pending"} />
                 </div>
               </div>
             </div>
@@ -128,7 +128,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
                 <div>
                   <p className="text-xs text-slate-500">E-posta</p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    {client.email}
+                    {client.email || "-"}
                   </p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
                 <div>
                   <p className="text-xs text-slate-500">Telefon</p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    {client.phone}
+                    {client.phone || "-"}
                   </p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
                 <div>
                   <p className="text-xs text-slate-500">Adres</p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    {client.address}
+                    {client.district}, {client.city}
                   </p>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
             <div>
               <h2 className="font-semibold text-slate-950">Aktif Modül</h2>
               <p className="mt-1 text-sm text-slate-500">
-                {client.transportTypeLabel}
+                Şirket personel servisi
               </p>
             </div>
           </div>
@@ -171,9 +171,9 @@ export function ClientDetailPage({ client }: { client: Client }) {
               Kurulum Modeli
             </p>
             <p className="mt-2 text-sm font-semibold text-slate-950">
-              {client.setupModel === "company-managed"
+              {client.setupPreference === "Company Managed"
                 ? "Şirket yöneticisi kurar"
-                : client.setupModel === "hybrid"
+                : client.setupPreference === "Hybrid"
                   ? "Karışık model"
                   : "ABC Turizm kurar"}
             </p>
@@ -186,7 +186,7 @@ export function ClientDetailPage({ client }: { client: Client }) {
           const Icon = link.icon;
           const href = link.href.startsWith("/")
             ? link.href
-            : `/admin/clients/${client.numericId}/${link.href}`;
+            : `/admin/clients/${client.clientId}/${link.href}`;
 
           return (
             <Link href={href} key={link.title}>

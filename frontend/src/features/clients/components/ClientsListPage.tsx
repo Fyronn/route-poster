@@ -13,11 +13,11 @@ import type { Client } from "../types";
 
 export function ClientsListPage({ clients }: { clients: Client[] }) {
   const totalEmployees = clients.reduce(
-    (total, client) => total + client.employeeCount,
+    (total, client) => total + (client.employeeCount || 0),
     0,
   );
   const totalRoutes = clients.reduce(
-    (total, client) => total + client.routeRequestCount,
+    (total, client) => total + (client.routeRequestCount || 0),
     0,
   );
 
@@ -58,19 +58,19 @@ export function ClientsListPage({ clients }: { clients: Client[] }) {
 
       <div className="mb-6 grid gap-4 xl:grid-cols-3">
         {clients.map((client) => (
-          <Link href={`/admin/clients/${client.numericId}`} key={client.id}>
+          <Link href={`/admin/clients/${client.clientId}`} key={client.clientId}>
             <Card className="h-full p-5 transition hover:border-teal-200 hover:shadow-md">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
                   <Building2 className="h-6 w-6" />
                 </div>
-                <StatusBadge status={client.setupStatus} />
+                <StatusBadge status={client.setupStatus || "pending"} />
               </div>
               <h2 className="text-lg font-semibold text-slate-950">
-                {client.name}
+                {client.clientName}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                {client.transportTypeLabel}
+                Şirket personel servisi
               </p>
               <div className="mt-6 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4">
                 <div>
@@ -129,23 +129,23 @@ export function ClientsListPage({ clients }: { clients: Client[] }) {
             {clients.map((client) => (
               <tr
                 className="border-b border-slate-100 last:border-0"
-                key={client.id}
+                key={client.clientId}
               >
                 <td className="px-5 py-4">
                   <Link
                     className="font-semibold text-slate-950 hover:text-teal-700"
-                    href={`/admin/clients/${client.numericId}`}
+                    href={`/admin/clients/${client.clientId}`}
                   >
-                    {client.name}
+                    {client.clientName}
                   </Link>
-                  <p className="mt-1 text-xs text-slate-500">{client.id}</p>
+                  <p className="mt-1 text-xs text-slate-500">CLT-{String(client.clientId).padStart(3, "0")}</p>
                 </td>
                 <td className="px-5 py-4">
-                  <Badge variant="teal">{client.transportTypeLabel}</Badge>
+                  <Badge variant="teal">Şirket personel servisi</Badge>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-700">
                   <p className="font-medium text-slate-900">
-                    {client.contactName}
+                    {client.authorizedPerson}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{client.email}</p>
                 </td>
@@ -153,7 +153,7 @@ export function ClientsListPage({ clients }: { clients: Client[] }) {
                   {client.district}, {client.city}
                 </td>
                 <td className="px-5 py-4">
-                  <StatusBadge status={client.setupStatus} />
+                  <StatusBadge status={client.setupStatus || "pending"} />
                 </td>
                 <td className="px-5 py-4 text-right text-sm text-slate-700">
                   {client.employeeCount} çalışan / {client.routeRequestCount} rota

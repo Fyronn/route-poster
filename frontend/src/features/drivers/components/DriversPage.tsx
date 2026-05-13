@@ -117,13 +117,13 @@ export function DriversPage({ drivers }: { drivers: Driver[] }) {
             hint="Atamaya hazir"
             icon={UserRoundCheck}
             label="Aktif"
-            value={items.filter((driver) => driver.status === "active").length}
+            value={items.filter((driver) => driver.isActive).length}
           />
           <MetricCard
             hint="Pasif veya izinli"
             icon={UserRoundCheck}
             label="Pasif"
-            value={items.filter((driver) => driver.status === "inactive").length}
+            value={items.filter((driver) => !driver.isActive).length}
           />
         </div>
 
@@ -151,23 +151,23 @@ export function DriversPage({ drivers }: { drivers: Driver[] }) {
             </thead>
             <tbody>
               {items.map((driver) => (
-                <tr className="border-b border-slate-100 last:border-0" key={driver.id}>
+                <tr className="border-b border-slate-100 last:border-0" key={driver.userId}>
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">
-                      {driver.fullName}
+                      {driver.firstName} {driver.lastName}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {driver.email}
+                      {driver.email || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {driver.phone}
+                    {driver.phone || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {driver.identityNumber ?? "-"}
+                    {driver.identityNumber || "-"}
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={driver.status} />
+                    <StatusBadge status={driver.isActive ? "active" : "inactive"} />
                   </td>
                 </tr>
               ))}
