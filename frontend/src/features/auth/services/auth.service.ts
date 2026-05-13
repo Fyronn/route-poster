@@ -89,6 +89,9 @@ function readRoleIdFromClaims(claims: Record<string, unknown>) {
   return null;
 }
 
+
+
+
 function mapAuthResponseDto(dto: AuthResponseDto): AuthSession {
   const token = dto.Token ?? dto.token;
   const user = dto.User ?? dto.user;
