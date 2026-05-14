@@ -10,5 +10,7 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests
         public string? Direction { get; set; }
         public string? OperatingDays { get; set; }
         public TimeOnly? PlannedStartTime { get; set; }
+        public List<int> StopIds { get; set; } = new();
+        public List<int> PassengerIds { get; set; } = new();
     }
 }

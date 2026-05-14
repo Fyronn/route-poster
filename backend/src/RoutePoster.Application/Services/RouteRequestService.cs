@@ -59,6 +59,35 @@ namespace RoutePoster.Application.Services
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
+            
+            // 1. Durakları Sırasıyla Ekle
+            if (dto.StopIds != null && dto.StopIds.Any())
+            {
+                for (int i = 0; i < dto.StopIds.Count; i++)
+                {
+                    entity.TblrouteStops.Add(new TblrouteStop
+                    {
+                        StopId = dto.StopIds[i],
+                        StopOrder = i + 1,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            // 2. Yolcuları Rotaya Ata
+            if (dto.PassengerIds != null && dto.PassengerIds.Any())
+            {
+                foreach (var passengerId in dto.PassengerIds)
+                {
+                    entity.TblpassengerRoutePreferences.Add(new TblpassengerRoutePreference
+                    {
+                        PassengerId = passengerId,
+                        IsDefault = true,
+                        PickupStopId = dto.StopIds?.FirstOrDefault() ?? 0,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
 
             await _routeRequestRepository.AddAsync(entity);
             await _routeRequestRepository.SaveChangesAsync();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RoutePoster.Domain.Entities;
 
-public partial class TblpassengerAbsence
+public partial class TblpassengerTemporaryPreference
 {
     public int Id { get; set; }
 
@@ -11,19 +11,27 @@ public partial class TblpassengerAbsence
 
     public int RouteId { get; set; }
 
-    public DateOnly AbsenceDate { get; set; }
+    public int PickupStopId { get; set; }
 
-    public DateTime? NotificationTime { get; set; }
+    public int? DropoffStopId { get; set; }
+
+    public DateOnly StartDate { get; set; }
+
+    public DateOnly EndDate { get; set; }
 
     public string? Description { get; set; }
+
+    public bool? IsActive { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public virtual Tblstop? DropoffStop { get; set; }
 
     public virtual Tbluser Passenger { get; set; } = null!;
+
+    public virtual Tblstop PickupStop { get; set; } = null!;
 
     public virtual Tblroute Route { get; set; } = null!;
 }

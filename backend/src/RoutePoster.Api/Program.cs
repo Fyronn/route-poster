@@ -56,6 +56,8 @@ builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IStopRequestRepository,
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IRouteRequestRepository, RoutePoster.Infrastructure.Repositories.RouteRequestRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.ITripRepository, RoutePoster.Infrastructure.Repositories.TripRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IVehicleRepository, RoutePoster.Infrastructure.Repositories.VehicleRepository>();
+builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerPreferenceRepository>();
+builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerTemporaryPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerTemporaryPreferenceRepository>();
 
 // Services
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IClientService, RoutePoster.Application.Services.ClientService>();
@@ -66,6 +68,7 @@ builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.ITripServ
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IVehicleService, RoutePoster.Application.Services.VehicleService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IDriverService, RoutePoster.Application.Services.DriverService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IAuthService, RoutePoster.Application.Services.AuthService>();
+builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IPassengerPreferenceService, RoutePoster.Application.Services.PassengerPreferenceService>();
 
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
