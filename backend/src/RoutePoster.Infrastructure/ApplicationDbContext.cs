@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using RoutePoster.Domain.Entities;
@@ -23,6 +23,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<TblpassengerAbsence> TblpassengerAbsences { get; set; }
 
     public virtual DbSet<TblpassengerRoutePreference> TblpassengerRoutePreferences { get; set; }
+
+    public virtual DbSet<TblpassengerTemporaryPreference> TblpassengerTemporaryPreferences { get; set; }
 
     public virtual DbSet<Tblrole> Tblroles { get; set; }
 
@@ -160,6 +162,41 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.RouteId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FKPassengerRoutePreferencesRoute");
+        });
+
+        modelBuilder.Entity<TblpassengerTemporaryPreference>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TBLPasse__3214EC077B537CDD");
+
+            entity.ToTable("TBLPassengerTemporaryPreferences");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.DropoffStop).WithMany(p => p.TblpassengerTemporaryPreferenceDropoffStops)
+                .HasForeignKey(d => d.DropoffStopId)
+                .HasConstraintName("FK_TempPref_DropoffStop");
+
+            entity.HasOne(d => d.Passenger).WithMany(p => p.TblpassengerTemporaryPreferences)
+                .HasForeignKey(d => d.PassengerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TempPref_Passenger");
+
+            entity.HasOne(d => d.PickupStop).WithMany(p => p.TblpassengerTemporaryPreferencePickupStops)
+                .HasForeignKey(d => d.PickupStopId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TempPref_PickupStop");
+
+            entity.HasOne(d => d.Route).WithMany(p => p.TblpassengerTemporaryPreferences)
+                .HasForeignKey(d => d.RouteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TempPref_Route");
         });
 
         modelBuilder.Entity<Tblrole>(entity =>

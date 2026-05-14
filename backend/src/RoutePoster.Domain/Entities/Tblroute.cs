@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace RoutePoster.Domain.Entities;
@@ -38,6 +38,8 @@ public partial class Tblroute
     public virtual ICollection<TblpassengerAbsence> TblpassengerAbsences { get; set; } = new List<TblpassengerAbsence>();
 
     public virtual ICollection<TblpassengerRoutePreference> TblpassengerRoutePreferences { get; set; } = new List<TblpassengerRoutePreference>();
+
+    public virtual ICollection<TblpassengerTemporaryPreference> TblpassengerTemporaryPreferences { get; set; } = new List<TblpassengerTemporaryPreference>();
 
     public virtual ICollection<TblrouteStop> TblrouteStops { get; set; } = new List<TblrouteStop>();
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace RoutePoster.Domain.Entities;
@@ -42,6 +42,10 @@ public partial class Tblstop
     public virtual ICollection<TblpassengerRoutePreference> TblpassengerRoutePreferenceDropoffStops { get; set; } = new List<TblpassengerRoutePreference>();
 
     public virtual ICollection<TblpassengerRoutePreference> TblpassengerRoutePreferencePickupStops { get; set; } = new List<TblpassengerRoutePreference>();
+
+    public virtual ICollection<TblpassengerTemporaryPreference> TblpassengerTemporaryPreferenceDropoffStops { get; set; } = new List<TblpassengerTemporaryPreference>();
+
+    public virtual ICollection<TblpassengerTemporaryPreference> TblpassengerTemporaryPreferencePickupStops { get; set; } = new List<TblpassengerTemporaryPreference>();
 
     public virtual ICollection<TblrouteStop> TblrouteStops { get; set; } = new List<TblrouteStop>();
 
