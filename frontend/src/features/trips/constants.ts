@@ -2,7 +2,7 @@ import type { Trip } from "./types";
 
 export const tripsMockData: Trip[] = [
   {
-    id: 8001,
+    tripId: 8001,
     routeId: 1,
     date: "2026-05-08",
     time: "07:10",
@@ -10,9 +10,10 @@ export const tripsMockData: Trip[] = [
     vehicle: "34 ABC 204",
     driver: "Mehmet Kaya",
     status: "completed",
+    isActive: true,
   },
   {
-    id: 8002,
+    tripId: 8002,
     routeId: 2,
     date: "2026-05-08",
     time: "07:00",
@@ -20,9 +21,10 @@ export const tripsMockData: Trip[] = [
     vehicle: "34 DEF 112",
     driver: "Serkan Yılmaz",
     status: "started",
+    isActive: true,
   },
   {
-    id: 8003,
+    tripId: 8003,
     routeId: 3,
     date: "2026-05-08",
     time: "18:15",
@@ -30,5 +32,6 @@ export const tripsMockData: Trip[] = [
     vehicle: "34 GHI 021",
     driver: "Derya Şahin",
     status: "planned",
+    isActive: true,
   },
 ];

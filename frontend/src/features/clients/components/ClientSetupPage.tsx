@@ -26,7 +26,7 @@ export function ClientSetupPage({
   return (
     <PageSection
       description="Client oluşturulduktan sonra corporate shuttle kurulum adımları buradan izlenir."
-      title={`${client.name} Setup Checklist`}
+      title={`${client.clientName} Setup Checklist`}
     >
       <Card className="mb-6 p-5">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

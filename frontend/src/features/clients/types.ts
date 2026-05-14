@@ -5,50 +5,24 @@ import type {
   WorkflowStatus,
 } from "@/types/common";
 
-export type ClientDto = {
-  KurumId?: number;
-  kurumId?: number;
-  KurumAdi?: string;
-  kurumAdi?: string;
-  KurumTipi?: string | null;
-  kurumTipi?: string | null;
-  VergiNo?: string | null;
-  vergiNo?: string | null;
-  AdresIl?: string | null;
-  adresIl?: string | null;
-  AdresIlce?: string | null;
-  adresIlce?: string | null;
-  AktifMi?: boolean | null;
-  aktifMi?: boolean | null;
-  YetkiliKisi?: string | null;
-  yetkiliKisi?: string | null;
-  Telefon?: string | null;
-  telefon?: string | null;
-  Email?: string | null;
-  email?: string | null;
-  KurulumTercihi?: string | null;
-  kurulumTercihi?: string | null;
-};
-
 export type Client = {
-  id: string;
-  numericId: number;
-  name: string;
-  contactName: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  district: string;
-  taxNumber?: string;
-  transportType: TransportType;
-  transportTypeLabel: string;
-  setupModel: SetupModel;
-  status: EntityStatus;
-  setupStatus: WorkflowStatus;
-  employeeCount: number;
-  stopCount: number;
-  routeRequestCount: number;
+  clientId: number;
+  clientName: string;
+  clientType?: string | null;
+  taxNumber?: string | null;
+  city?: string | null;
+  district?: string | null;
+  isActive?: boolean;
+  authorizedPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  setupPreference?: string | null;
+  
+  // UI Specific fallback properties that are populated locally or optionally
+  setupStatus?: WorkflowStatus;
+  employeeCount?: number;
+  stopCount?: number;
+  routeRequestCount?: number;
 };
 
 export type CreateClientFormValues = {

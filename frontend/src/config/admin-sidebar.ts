@@ -56,29 +56,10 @@ export const adminSidebarItems = [
     icon: Route,
     roles: ["service-manager"],
   },
-  /* {
-    label: "Shuttle Plan",
-    href: "/admin/corporate-shuttle/shuttle-plan",
-    icon: ClipboardList,
-    roles: ["service-manager"],
-  } */,
-  /* {
-    label: "Plan Requests",
-    href: "/admin/shuttle-plan-requests",
-    icon: Send,
-    roles: ["admin"],
-  } */,
   {
     label: "Route Approvals",
     href: "/admin/route-request-approvals",
     icon: CheckSquare,
     roles: ["admin"],
-  },
-  /* {
-    label: "Service Routes",
-    href: "/admin/service-routes",
-    icon: Route,
-    roles: ["admin"],
-  }, */
-  /*  */
+  }
 ];

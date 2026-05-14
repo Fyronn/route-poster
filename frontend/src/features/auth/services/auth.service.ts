@@ -20,13 +20,13 @@ const ROLE_CLAIM_KEYS = [
 
 function mapAuthUserDto(dto: AuthUserDto): AuthUser {
   return {
-    id: dto.KullaniciId ?? dto.kullaniciId ?? 0,
-    clientId: dto.KurumId ?? dto.kurumId ?? null,
-    roleId: dto.RolId ?? dto.rolId ?? null,
-    firstName: dto.Ad ?? dto.ad ?? "",
-    lastName: dto.Soyad ?? dto.soyad ?? "",
-    email: dto.Email ?? dto.email ?? "",
-    roleName: dto.RolAdi ?? dto.rolAdi ?? null,
+    id: dto.userId ?? 0,
+    clientId: dto.clientId ?? null,
+    roleId: dto.roleId ?? null,
+    firstName: dto.firstName ?? "",
+    lastName: dto.lastName ?? "",
+    email: dto.email ?? "",
+    roleName: dto.roleName ?? null,
   };
 }
 
@@ -90,8 +90,8 @@ function readRoleIdFromClaims(claims: Record<string, unknown>) {
 }
 
 function mapAuthResponseDto(dto: AuthResponseDto): AuthSession {
-  const token = dto.Token ?? dto.token;
-  const user = dto.User ?? dto.user;
+  const token = dto.token;
+  const user = dto.user;
 
   if (!token || !user) {
     throw new Error("Auth response token veya user bilgisi icermiyor.");
@@ -137,12 +137,12 @@ export async function registerUser(payload: RegisterUserPayload) {
   const response = await postRequest<AuthResponseDto>(
     "/api/Auth/register",
     {
-      ad: payload.firstName,
-      soyad: payload.lastName,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
       email: payload.email,
       password: payload.password,
-      rolId: payload.roleId,
-      kurumId: payload.clientId,
+      roleId: payload.roleId,
+      clientId: payload.clientId,
     },
     { skipAuth: true },
   );

@@ -1,25 +1,20 @@
-export type TripDto = {
-  SeferId?: number;
-  seferId?: number;
-  RotaId?: number | null;
-  rotaId?: number | null;
-  SeferTarihi?: string;
-  seferTarihi?: string;
-  BaslamaZamani?: string | null;
-  baslamaZamani?: string | null;
-  BitisZamani?: string | null;
-  bitisZamani?: string | null;
-  Statu?: string | null;
-  statu?: string | null;
-};
-
 export type Trip = {
-  id: number;
-  routeId: number | null;
-  date: string;
-  time: string;
-  routeName: string;
-  vehicle: string;
-  driver: string;
-  status: "planned" | "started" | "completed" | "cancelled";
+  tripId: number;
+  tripName?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  origin?: string | null;
+  destination?: string | null;
+  status?: string | null;
+  vehicleId?: number | null;
+  driverId?: number | null;
+  routeId?: number | null;
+  isActive?: boolean | null;
+
+  // Optional fields for UI / mock consistency
+  routeName?: string;
+  vehicle?: string;
+  driver?: string;
+  date?: string;
+  time?: string;
 };

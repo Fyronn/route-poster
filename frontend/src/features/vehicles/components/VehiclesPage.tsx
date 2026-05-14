@@ -130,7 +130,7 @@ export function VehiclesPage({ vehicles }: { vehicles: Vehicle[] }) {
             hint="Atamaya hazir"
             icon={Bus}
             label="Aktif"
-            value={items.filter((vehicle) => vehicle.status === "active").length}
+            value={items.filter((vehicle) => vehicle.isActive).length}
           />
           <MetricCard
             hint="Toplam koltuk"
@@ -167,27 +167,27 @@ export function VehiclesPage({ vehicles }: { vehicles: Vehicle[] }) {
             </thead>
             <tbody>
               {items.map((vehicle) => (
-                <tr className="border-b border-slate-100 last:border-0" key={vehicle.id}>
+                <tr className="border-b border-slate-100 last:border-0" key={vehicle.vehicleId}>
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">
-                      {vehicle.plate}
+                      {vehicle.plateNumber || "-"}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {vehicle.model}
+                      {vehicle.brandModel || "-"}
                       {vehicle.productionYear ? ` / ${vehicle.productionYear}` : ""}
                     </p>
                   </td>
                   <td className="px-5 py-4">
-                    <Badge variant="neutral">{vehicle.vehicleType}</Badge>
+                    <Badge variant="neutral">{vehicle.vehicleType || "-"}</Badge>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
                     {vehicle.capacity} koltuk
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {vehicle.equipment ?? "-"}
+                    {vehicle.equipmentFeatures ?? "-"}
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={vehicle.status} />
+                    <StatusBadge status={vehicle.isActive ? "active" : "inactive"} />
                   </td>
                 </tr>
               ))}

@@ -153,25 +153,25 @@ export function TripsPage({ trips }: { trips: Trip[] }) {
             </thead>
             <tbody>
               {items.map((trip) => (
-                <tr className="border-b border-slate-100 last:border-0" key={trip.id}>
+                <tr className="border-b border-slate-100 last:border-0" key={trip.tripId}>
                   <td className="px-5 py-4 font-semibold text-slate-950">
-                    TRP-{trip.id}
+                    TRP-{trip.tripId}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    <p>{formatDate(trip.date)}</p>
-                    <p className="mt-1 text-xs text-slate-500">{trip.time}</p>
+                    <p>{trip.date ? formatDate(trip.date) : "-"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{trip.time || "-"}</p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {trip.routeName}
+                    {trip.routeName || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {trip.vehicle}
+                    {trip.vehicle || "-"}
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-700">
-                    {trip.driver}
+                    {trip.driver || "-"}
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={trip.status} />
+                    <StatusBadge status={trip.status || "planned"} />
                   </td>
                 </tr>
               ))}

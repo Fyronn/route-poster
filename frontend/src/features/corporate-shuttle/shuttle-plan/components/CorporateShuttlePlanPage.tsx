@@ -112,23 +112,23 @@ export function CorporateShuttlePlanPage({
             {plan.routes.map((route) => (
               <div
                 className="rounded-2xl border border-slate-200 p-4"
-                key={route.id}
+                key={route.routeId}
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="font-semibold text-slate-950">
-                      {route.routeName}
+                      {route.routeName || "-"}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
-                      {route.startPoint} → {route.endPoint}
+                      {route.startPoint || "-"} → {route.endPoint || "-"}
                     </p>
                   </div>
-                  <StatusBadge status={route.status} />
+                  <StatusBadge status={route.status?.toLowerCase() || "requested"} />
                 </div>
                 <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
-                  <span>{route.employeeCount} çalışan</span>
-                  <span>{route.stopCount} durak</span>
-                  <span>{route.estimatedDurationMin} dk tahmini süre</span>
+                  <span>{route.employeeCount || 0} çalışan</span>
+                  <span>{route.stopCount || 0} durak</span>
+                  <span>{route.estimatedDurationMinutes || 0} dk tahmini süre</span>
                 </div>
               </div>
             ))}
