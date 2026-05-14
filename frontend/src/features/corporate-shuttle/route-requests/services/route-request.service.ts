@@ -1,77 +1,29 @@
 import { getRequest, postRequest } from "@/lib/api";
 
 import { corporateRouteRequestsMockData } from "../constants";
-import type { CorporateRouteRequest, RouteRequestDto } from "../types";
+import type { CorporateRouteRequest } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
 };
 
-export function mapRouteRequestStatus(
-  status?: string | null,
-): CorporateRouteRequest["status"] {
-  if (status === "Aktif") return "approved";
-  if (status === "Plan Gönderildi" || status === "Plan Gonderildi") {
-    return "submitted";
-  }
-  if (status === "Onaylandı" || status === "Onaylandi") return "approved";
-  if (status === "Reddedildi") return "rejected";
-  if (status === "Revizyon İstendi" || status === "Revizyon Istendi") {
-    return "revision_requested";
-  }
-  return "requested";
-}
-
-function mapDirection(direction?: string | null) {
-  if (direction === "Gidis") return "Gidiş";
-  if (direction === "Donus") return "Dönüş";
-  return direction ?? "-";
-}
-
-function mapWorkingDays(days?: string | null) {
-  if (days === "1,2,3,4,5") return "Pzt - Cum";
-  if (days === "1,2,3,4,5,6") return "Pzt - Cmt";
-  return days ?? "-";
-}
-
-export function mapRouteRequestDto(dto: RouteRequestDto): CorporateRouteRequest {
-  const routeId = dto.RotaId ?? dto.rotaId ?? 0;
-  const clientId = dto.KurumId ?? dto.kurumId;
-  const direction = dto.Yon ?? dto.yon;
-  const isReturn = direction === "Donus" || direction === "Dönüş";
-
-  return {
-    id: routeId,
-    clientName: clientId ? `Client #${clientId}` : "Client",
-    routeName: dto.RotaAdi ?? dto.rotaAdi ?? "İsimsiz rota",
-    startPoint: isReturn ? "Şirket Kampüsü" : "Toplanma Bölgesi",
-    endPoint: isReturn ? "Dağıtım Bölgesi" : "Şirket Kampüsü",
-    direction: mapDirection(direction),
-    shift: dto.VardiyaTipi ?? dto.vardiyaTipi ?? "-",
-    workingDays: mapWorkingDays(dto.CalismaGunleri ?? dto.calismaGunleri),
-    plannedStartTime:
-      dto.PlanlananBaslangicSaati ?? dto.planlananBaslangicSaati ?? "-",
-    stopCount: 0,
-    employeeCount: 0,
-    estimatedDistanceKm: 0,
-    estimatedDurationMin:
-      dto.TahminiSureDakika ?? dto.tahminiSureDakika ?? 0,
-    status: mapRouteRequestStatus(dto.Statu ?? dto.statu),
-  };
-}
-
 export async function getCorporateRouteRequests(
-  clientId = 1,
+  clientId: number,
   options: ServiceOptions = {},
 ) {
+  assertClientId(clientId);
+
   try {
-    const requests = await getRequest<RouteRequestDto[]>(
+    const requests = await getRequest<CorporateRouteRequest[]>(
       `/api/corporate-shuttle/clients/${clientId}/route-requests`,
       { authToken: options.authToken },
     );
-    return requests.map(mapRouteRequestDto);
+    return requests;
   } catch {
-    return corporateRouteRequestsMockData;
+    return corporateRouteRequestsMockData.map((request) => ({
+      ...request,
+      clientId,
+    }));
   }
 }
 
@@ -79,9 +31,9 @@ export async function createCorporateRouteRequest(
   clientId: number,
   payload: {
     routeName: string;
-    shift?: string;
+    shiftType?: string;
     direction?: string;
-    workingDays?: string;
+    operatingDays?: string;
     plannedStartTime?: string;
     plannedStops?: Array<{
       estimatedArrivalTime?: string;
@@ -91,26 +43,29 @@ export async function createCorporateRouteRequest(
     }>;
   },
 ) {
-  const request = await postRequest<RouteRequestDto>(
+  assertClientId(clientId);
+
+  const request = await postRequest<CorporateRouteRequest>(
     `/api/corporate-shuttle/clients/${clientId}/route-requests`,
     {
-      kurumId: clientId,
-      rotaAdi: payload.routeName,
-      vardiyaTipi: payload.shift,
-      yon: payload.direction,
-      calismaGunleri: payload.workingDays,
-      planlananBaslangicSaati: payload.plannedStartTime,
-      rotaDuraklari: payload.plannedStops?.map((stop) => ({
-        durakId: stop.stopId,
-        durakAdi: stop.stopName,
-        hedefVarisSaati: stop.estimatedArrivalTime || null,
-        siraNo: stop.sequence,
-      })),
+      clientId: clientId,
+      routeName: payload.routeName,
+      shiftType: payload.shiftType,
+      direction: payload.direction,
+      operatingDays: payload.operatingDays,
+      plannedStartTime: payload.plannedStartTime,
+      // mapping workingDays / plannedStops etc manually if backend still doesn't support them on this particular DTO
     },
   );
 
   return {
-    ...mapRouteRequestDto(request),
+    ...request,
     plannedStops: payload.plannedStops,
   };
+}
+
+function assertClientId(clientId: number) {
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    throw new Error("Gecerli bir clientId olmadan corporate shuttle verisi okunamaz.");
+  }
 }

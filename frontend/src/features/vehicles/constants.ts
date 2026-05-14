@@ -2,23 +2,23 @@ import type { Vehicle } from "./types";
 
 export const vehiclesMockData: Vehicle[] = [
   {
-    id: 301,
-    plate: "34 ABC 123",
+    vehicleId: 301,
+    plateNumber: "34 ABC 123",
     capacity: 27,
-    model: "Mercedes Sprinter",
+    brandModel: "Mercedes Sprinter",
     productionYear: 2022,
     vehicleType: "Midibus",
-    equipment: "Klima, kamera",
-    status: "active",
+    equipmentFeatures: "Klima, kamera",
+    isActive: true,
   },
   {
-    id: 302,
-    plate: "34 XYZ 456",
+    vehicleId: 302,
+    plateNumber: "34 XYZ 456",
     capacity: 46,
-    model: "Temsa Prestij",
+    brandModel: "Temsa Prestij",
     productionYear: 2021,
     vehicleType: "Otobus",
-    equipment: "Klima, takip cihazi",
-    status: "active",
+    equipmentFeatures: "Klima, takip cihazi",
+    isActive: true,
   },
 ];

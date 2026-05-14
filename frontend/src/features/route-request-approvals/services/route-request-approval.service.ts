@@ -1,8 +1,5 @@
 import { getRequest, putRequest } from "@/lib/api";
-import {
-  mapRouteRequestDto,
-} from "@/features/corporate-shuttle/route-requests/services/route-request.service";
-import type { RouteRequestDto } from "@/features/corporate-shuttle/route-requests/types";
+import type { CorporateRouteRequest } from "@/features/corporate-shuttle/route-requests/types";
 
 import { routeRequestApprovalsMockData } from "../constants";
 import type { RouteRequestApproval } from "../types";
@@ -13,15 +10,17 @@ type ServiceOptions = {
 
 export async function getRouteRequestApprovals(options: ServiceOptions = {}) {
   try {
-    const requests = await getRequest<RouteRequestDto[]>(
+    const requests = await getRequest<CorporateRouteRequest[]>(
       "/api/shuttle-plan-requests",
       { authToken: options.authToken },
     );
     return requests.map<RouteRequestApproval>((request) => ({
-      ...mapRouteRequestDto(request),
+      ...request,
+      id: request.routeId,
+      routeName: request.routeName || "İsimsiz",
       requestedBy: "Şirket yöneticisi",
       vehicleSuggestion: "Operasyon değerlendirmesi bekliyor",
-    }));
+    } as RouteRequestApproval));
   } catch {
     return routeRequestApprovalsMockData;
   }

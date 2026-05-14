@@ -21,7 +21,9 @@ namespace RoutePoster.Application.Services
         public async Task<IEnumerable<RouteRequestDto>> GetAllAsync()
         {
             var entities = await _routeRequestRepository.GetAllAsync();
-            return entities.Select(MapToDto);
+
+            //sadece pendingapproval ve active olanları getirsin
+            return entities.Where(r => r.Status == "PendingApproval" || r.Status == "Active").Select(MapToDto);
         }
 
         public async Task<IEnumerable<RouteRequestDto>> GetByClientIdAsync(int clientId)

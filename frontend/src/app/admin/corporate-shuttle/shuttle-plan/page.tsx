@@ -12,7 +12,9 @@ export default async function AdminCorporateShuttlePlanPage() {
   const session = await requireServerAuthSession();
   ensureServiceManagerAccess(session);
   const clientId = getScopedClientId(session);
-  const plan = await getCorporateShuttlePlan();
+  const plan = await getCorporateShuttlePlan(clientId, {
+    authToken: session.token,
+  });
 
   return <CorporateShuttlePlanPage clientId={clientId} plan={plan} />;
 }

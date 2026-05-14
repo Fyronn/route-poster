@@ -1,29 +1,22 @@
-export type EmployeeDto = {
-  KullaniciId?: number;
-  kullaniciId?: number;
-  KurumId?: number | null;
-  kurumId?: number | null;
-  Ad?: string;
-  ad?: string;
-  Soyad?: string;
-  soyad?: string;
-  Email?: string | null;
-  email?: string | null;
-  Telefon?: string | null;
-  telefon?: string | null;
-  KimlikNo?: string | null;
-  kimlikNo?: string | null;
-  AktifMi?: boolean | null;
-  aktifMi?: boolean | null;
-};
-
 export type CorporateEmployee = {
-  id: number;
-  fullName: string;
-  department: string;
-  email: string;
-  phone: string;
-  homeDistrict: string;
-  preferredStop: string;
-  status: "active" | "inactive" | "pending";
+  userId?: number | null;
+  employeeId?: number | null;
+  clientId?: number | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+  addressTitle?: string | null;
+  addressDetail?: string | null;
+  city?: string | null;
+  district?: string | null;
+  neighborhood?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  workShift?: string | null;
+  isActive?: boolean | null;
+  
+  // UI Specific optional fields
+  email?: string | null;
+  department?: string;
+  preferredStop?: string;
 };

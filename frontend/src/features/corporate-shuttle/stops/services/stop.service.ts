@@ -1,53 +1,26 @@
 import { getRequest, postRequest } from "@/lib/api";
 
 import { corporateStopsMockData } from "../constants";
-import type { CorporateStopRequest, StopRequestDto } from "../types";
+import type { CorporateStopRequest } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
 };
 
-function mapStatus(status?: string | null): CorporateStopRequest["status"] {
-  if (status === "Onaylandi" || status === "Onaylandı") return "approved";
-  if (status === "Reddedildi") return "rejected";
-  if (status === "Revizyon") return "revision_requested";
-  return "requested";
-}
-
-export function mapStopDto(dto: StopRequestDto): CorporateStopRequest {
-  const status = dto.Statu ?? dto.statu;
-  const latitude = dto.Enlem ?? dto.enlem ?? undefined;
-  const longitude = dto.Boylam ?? dto.boylam ?? undefined;
-
-  return {
-    id: dto.DurakId ?? dto.durakId ?? 0,
-    stopName: dto.DurakAdi ?? dto.durakAdi ?? "İsimsiz durak",
-    address:
-      dto.Adres ??
-      dto.adres ??
-      (latitude && longitude ? `${latitude}, ${longitude}` : "-"),
-    district: "-",
-    stopType: "both",
-    employeeCount: 0,
-    status: mapStatus(status),
-    latitude,
-    longitude,
-    operatorNote: dto.OperatorNotu ?? dto.operatorNotu ?? undefined,
-  };
-}
-
 export async function getCorporateStops(
-  clientId = 1,
+  clientId: number,
   options: ServiceOptions = {},
 ) {
+  assertClientId(clientId);
+
   try {
-    const stops = await getRequest<StopRequestDto[]>(
+    const stops = await getRequest<CorporateStopRequest[]>(
       `/api/corporate-shuttle/clients/${clientId}/stops`,
       { authToken: options.authToken },
     );
-    return stops.map(mapStopDto);
+    return stops;
   } catch {
-    return corporateStopsMockData;
+    return corporateStopsMockData.map((stop) => ({ ...stop, clientId }));
   }
 }
 
@@ -61,17 +34,25 @@ export async function createCorporateStop(
     operatorNote?: string;
   },
 ) {
-  const stop = await postRequest<StopRequestDto>(
+  assertClientId(clientId);
+
+  const stop = await postRequest<CorporateStopRequest>(
     `/api/corporate-shuttle/clients/${clientId}/stops`,
     {
-      kurumId: clientId,
-      durakAdi: payload.stopName,
-      adres: payload.address,
-      enlem: payload.latitude,
-      boylam: payload.longitude,
-      operatorNotu: payload.operatorNote,
+      clientId,
+      address: payload.address,
+      operatorNote: payload.operatorNote,
+      stopName: payload.stopName,
+      latitude: payload.latitude,
+      longitude: payload.longitude,
     },
   );
 
-  return mapStopDto(stop);
+  return stop;
+}
+
+function assertClientId(clientId: number) {
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    throw new Error("Gecerli bir clientId olmadan corporate shuttle verisi okunamaz.");
+  }
 }

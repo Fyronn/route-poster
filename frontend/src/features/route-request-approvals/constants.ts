@@ -5,11 +5,15 @@ import type { RouteRequestApproval } from "./types";
 export const routeRequestApprovalsMockData: RouteRequestApproval[] =
   corporateRouteRequestsMockData.map((request, index) => ({
     ...request,
+    id: request.routeId,
+    routeName: request.routeName || "Isimsiz",
     requestedBy: index % 2 === 0 ? "Jane Wilson" : "Mert Kaya",
     vehicleSuggestion:
-      request.employeeCount > 45 ? "2 midibus veya 1 büyük otobüs" : "1 midibus",
+      request.employeeCount && request.employeeCount > 25
+        ? "Midibus / Otobus (35+)"
+        : "Minibus (16-19)",
     decisionNote:
       request.status === "revision_requested"
-        ? "Durak sıralaması ve başlangıç saati revize edilmeli."
+        ? "Durak sayisi cok fazla, bolunmesi gerekir."
         : undefined,
   }));

@@ -1,24 +1,15 @@
 export type AuthUserDto = {
-  KullaniciId?: number;
-  kullaniciId?: number;
-  KurumId?: number | null;
-  kurumId?: number | null;
-  RolId?: number | null;
-  rolId?: number | null;
-  Ad?: string;
-  ad?: string;
-  Soyad?: string;
-  soyad?: string;
-  Email?: string;
+  userId?: number;
+  clientId?: number | null;
+  roleId?: number | null;
+  firstName?: string;
+  lastName?: string;
   email?: string;
-  RolAdi?: string | null;
-  rolAdi?: string | null;
+  roleName?: string | null;
 };
 
 export type AuthResponseDto = {
-  Token?: string;
   token?: string;
-  User?: AuthUserDto;
   user?: AuthUserDto;
 };
 

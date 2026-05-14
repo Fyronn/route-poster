@@ -41,10 +41,10 @@ export function RouteRequestApprovalsPage({
   const [assignmentRoute, setAssignmentRoute] =
     useState<RouteRequestApproval | null>(null);
   const [assignmentForm, setAssignmentForm] = useState<AssignmentFormState>({
-    driverId: drivers[0]?.id ? String(drivers[0].id) : "",
+    driverId: drivers[0]?.userId ? String(drivers[0].userId) : "",
     serviceDate: today,
     startTime: "07:30",
-    vehicleId: vehicles[0]?.id ? String(vehicles[0].id) : "",
+    vehicleId: vehicles[0]?.vehicleId ? String(vehicles[0].vehicleId) : "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -68,10 +68,10 @@ export function RouteRequestApprovalsPage({
     setAssignmentRoute(route);
     setAssignmentForm((current) => ({
       ...current,
-      driverId: current.driverId || (drivers[0]?.id ? String(drivers[0].id) : ""),
+      driverId: current.driverId || (drivers[0]?.userId ? String(drivers[0].userId) : ""),
       startTime: route.plannedStartTime?.slice(0, 5) || current.startTime,
       vehicleId:
-        current.vehicleId || (vehicles[0]?.id ? String(vehicles[0].id) : ""),
+        current.vehicleId || (vehicles[0]?.vehicleId ? String(vehicles[0].vehicleId) : ""),
     }));
   }
 
@@ -130,10 +130,10 @@ export function RouteRequestApprovalsPage({
       });
 
       const driver = drivers.find(
-        (item) => item.id === Number(assignmentForm.driverId),
+        (item) => item.userId === Number(assignmentForm.driverId),
       );
       const vehicle = vehicles.find(
-        (item) => item.id === Number(assignmentForm.vehicleId),
+        (item) => item.vehicleId === Number(assignmentForm.vehicleId),
       );
 
       setItems((current) =>
@@ -141,8 +141,8 @@ export function RouteRequestApprovalsPage({
           item.id === assignmentRoute.id
             ? {
                 ...item,
-                assignedDriver: driver?.fullName,
-                assignedVehicle: vehicle?.plate,
+                assignedDriver: driver ? `${driver.firstName} ${driver.lastName}` : "Bekliyor",
+                assignedVehicle: vehicle?.plateNumber || "Bekliyor",
                 status: "approved",
               }
             : item,
@@ -181,20 +181,20 @@ export function RouteRequestApprovalsPage({
             hint="Operasyon ekibi bekliyor"
             icon={Route}
             label="Talep Edildi"
-            value={items.filter((approval) => approval.status === "requested").length}
+            value={items.filter((approval) => approval.status?.toLowerCase() === "requested").length}
           />
           <MetricCard
             hint="Gercek rota olusturulabilir"
             icon={Check}
             label="Onayli"
-            value={items.filter((approval) => approval.status === "approved").length}
+            value={items.filter((approval) => approval.status?.toLowerCase() === "approved").length}
           />
           <MetricCard
             hint="Sirket yoneticisine donecek"
             icon={RefreshCcw}
             label="Revizyon"
             value={
-              items.filter((approval) => approval.status === "revision_requested")
+              items.filter((approval) => approval.status?.toLowerCase() === "revision_requested")
                 .length
             }
           />
@@ -267,11 +267,11 @@ export function RouteRequestApprovalsPage({
                       {approval.stopCount} durak / {approval.employeeCount} calisan
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-700">
-                      {approval.estimatedDistanceKm} km /{" "}
-                      {approval.estimatedDurationMin} dk
+                      {approval.estimatedDistanceKm || 0} km /{" "}
+                      {approval.estimatedDurationMinutes || 0} dk
                     </td>
                     <td className="px-5 py-4">
-                      <StatusBadge status={approval.status} />
+                      <StatusBadge status={approval.status?.toLowerCase() || "requested"} />
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
@@ -330,7 +330,7 @@ export function RouteRequestApprovalsPage({
                     {selected.clientName}
                   </p>
                 </div>
-                <StatusBadge status={selected.status} />
+                <StatusBadge status={selected.status?.toLowerCase() || "requested"} />
               </div>
               <div className="mt-5 space-y-4">
                 <div className="rounded-2xl border border-slate-200 p-4">
@@ -338,8 +338,8 @@ export function RouteRequestApprovalsPage({
                     Operasyon Tahmini
                   </p>
                   <p className="mt-2 text-sm text-slate-700">
-                    {selected.estimatedDistanceKm} km,{" "}
-                    {selected.estimatedDurationMin} dk, {selected.stopCount} durak
+                    {selected.estimatedDistanceKm || 0} km,{" "}
+                    {selected.estimatedDurationMinutes || 0} dk, {selected.stopCount || 0} durak
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 p-4">
@@ -417,8 +417,8 @@ export function RouteRequestApprovalsPage({
               >
                 <option value="">Arac secin</option>
                 {vehicles.map((vehicle) => (
-                  <option key={vehicle.id} value={vehicle.id}>
-                    {vehicle.plate} / {vehicle.capacity} koltuk
+                  <option key={vehicle.vehicleId} value={vehicle.vehicleId}>
+                    {vehicle.plateNumber} / {vehicle.capacity} koltuk
                   </option>
                 ))}
               </select>
@@ -437,8 +437,8 @@ export function RouteRequestApprovalsPage({
               >
                 <option value="">Sofor secin</option>
                 {drivers.map((driver) => (
-                  <option key={driver.id} value={driver.id}>
-                    {driver.fullName}
+                  <option key={driver.userId} value={driver.userId}>
+                    {driver.firstName} {driver.lastName}
                   </option>
                 ))}
               </select>
