@@ -8,9 +8,11 @@ type ServiceOptions = {
 };
 
 export async function getCorporateEmployees(
-  clientId = 1,
+  clientId: number,
   options: ServiceOptions = {},
 ) {
+  assertClientId(clientId);
+
   try {
     const employees = await getRequest<CorporateEmployee[]>(
       `/api/corporate-shuttle/clients/${clientId}/employees`,
@@ -18,7 +20,10 @@ export async function getCorporateEmployees(
     );
     return employees;
   } catch {
-    return corporateEmployeesMockData;
+    return corporateEmployeesMockData.map((employee) => ({
+      ...employee,
+      clientId,
+    }));
   }
 }
 
@@ -32,6 +37,8 @@ export async function createCorporateEmployee(
     identityNumber?: string;
   },
 ) {
+  assertClientId(clientId);
+
   const employee = await postRequest<CorporateEmployee>(
     `/api/corporate-shuttle/clients/${clientId}/employees`,
     {
@@ -45,4 +52,10 @@ export async function createCorporateEmployee(
   );
 
   return employee;
+}
+
+function assertClientId(clientId: number) {
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    throw new Error("Gecerli bir clientId olmadan corporate shuttle verisi okunamaz.");
+  }
 }

@@ -37,6 +37,19 @@ const emptyForm: StopFormState = {
   stopName: "",
 };
 
+function getFiniteNumber(value: unknown) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function getStopKey(stop: CorporateStopRequest, index: number) {
+  return stop.stopId ?? `${stop.clientId ?? "client"}-${stop.stopName ?? "stop"}-${index}`;
+}
+
+function isApprovedStatus(status?: string | null) {
+  return status?.trim().toLocaleLowerCase("tr-TR") === "approved";
+}
+
 function InputField({
   label,
   onChange,
@@ -138,13 +151,16 @@ export function CorporateStopsPage({
             hint="Rotaya bağlanmaya hazır"
             icon={MapPin}
             label="Onaylı Durak"
-            value={items.filter((stop) => stop.status === "approved").length}
+            value={items.filter((stop) => isApprovedStatus(stop.status)).length}
           />
           <MetricCard
             hint="Bu duraklara bağlı çalışan"
             icon={MapPin}
             label="Çalışan"
-            value={items.reduce((total, stop) => total + (stop.employeeCount || 0), 0)}
+            value={items.reduce(
+              (total, stop) => total + getFiniteNumber(stop.employeeCount),
+              0,
+            )}
           />
         </div>
 
@@ -172,10 +188,10 @@ export function CorporateStopsPage({
                 </tr>
               </thead>
               <tbody>
-                {items.map((stop) => (
+                {items.map((stop, index) => (
                   <tr
                     className="border-b border-slate-100 last:border-0"
-                    key={stop.stopId}
+                    key={getStopKey(stop, index)}
                   >
                     <td className="px-5 py-4">
                       <p className="font-semibold text-slate-950">
@@ -187,11 +203,13 @@ export function CorporateStopsPage({
                     </td>
                     <td className="px-5 py-4">
                       <Badge variant="neutral">
-                        {stopTypeLabels[stop.stopType || "both"]}
+                        {stopTypeLabels[stop.stopType || "both"] ??
+                          stop.stopType ??
+                          "both"}
                       </Badge>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-700">
-                      {stop.employeeCount || 0}
+                      {getFiniteNumber(stop.employeeCount)}
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge status={stop.status || "requested"} />

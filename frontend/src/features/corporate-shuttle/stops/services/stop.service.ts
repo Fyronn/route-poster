@@ -8,9 +8,11 @@ type ServiceOptions = {
 };
 
 export async function getCorporateStops(
-  clientId = 1,
+  clientId: number,
   options: ServiceOptions = {},
 ) {
+  assertClientId(clientId);
+
   try {
     const stops = await getRequest<CorporateStopRequest[]>(
       `/api/corporate-shuttle/clients/${clientId}/stops`,
@@ -18,7 +20,7 @@ export async function getCorporateStops(
     );
     return stops;
   } catch {
-    return corporateStopsMockData;
+    return corporateStopsMockData.map((stop) => ({ ...stop, clientId }));
   }
 }
 
@@ -32,10 +34,14 @@ export async function createCorporateStop(
     operatorNote?: string;
   },
 ) {
+  assertClientId(clientId);
+
   const stop = await postRequest<CorporateStopRequest>(
     `/api/corporate-shuttle/clients/${clientId}/stops`,
     {
-      clientId: clientId,
+      clientId,
+      address: payload.address,
+      operatorNote: payload.operatorNote,
       stopName: payload.stopName,
       latitude: payload.latitude,
       longitude: payload.longitude,
@@ -43,4 +49,10 @@ export async function createCorporateStop(
   );
 
   return stop;
+}
+
+function assertClientId(clientId: number) {
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    throw new Error("Gecerli bir clientId olmadan corporate shuttle verisi okunamaz.");
+  }
 }

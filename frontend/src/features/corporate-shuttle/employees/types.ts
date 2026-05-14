@@ -1,5 +1,6 @@
 export type CorporateEmployee = {
-  employeeId: number;
+  userId?: number | null;
+  employeeId?: number | null;
   clientId?: number | null;
   firstName?: string | null;
   lastName?: string | null;

@@ -8,9 +8,11 @@ type ServiceOptions = {
 };
 
 export async function getCorporateRouteRequests(
-  clientId = 1,
+  clientId: number,
   options: ServiceOptions = {},
 ) {
+  assertClientId(clientId);
+
   try {
     const requests = await getRequest<CorporateRouteRequest[]>(
       `/api/corporate-shuttle/clients/${clientId}/route-requests`,
@@ -18,7 +20,10 @@ export async function getCorporateRouteRequests(
     );
     return requests;
   } catch {
-    return corporateRouteRequestsMockData;
+    return corporateRouteRequestsMockData.map((request) => ({
+      ...request,
+      clientId,
+    }));
   }
 }
 
@@ -38,6 +43,8 @@ export async function createCorporateRouteRequest(
     }>;
   },
 ) {
+  assertClientId(clientId);
+
   const request = await postRequest<CorporateRouteRequest>(
     `/api/corporate-shuttle/clients/${clientId}/route-requests`,
     {
@@ -55,4 +62,10 @@ export async function createCorporateRouteRequest(
     ...request,
     plannedStops: payload.plannedStops,
   };
+}
+
+function assertClientId(clientId: number) {
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    throw new Error("Gecerli bir clientId olmadan corporate shuttle verisi okunamaz.");
+  }
 }

@@ -96,6 +96,18 @@ function normalizeStopPlan(plan: RouteRequestStopPlan[]) {
   return plan.map((stop, index) => ({ ...stop, sequence: index + 1 }));
 }
 
+function getStopId(stop: CorporateStopRequest) {
+  const stopId = Number(stop.stopId);
+  return Number.isFinite(stopId) && stopId > 0 ? stopId : null;
+}
+
+function getRequestKey(request: CorporateRouteRequest, index: number) {
+  return (
+    request.routeId ??
+    `${request.clientId ?? "client"}-${request.routeName ?? "route"}-${index}`
+  );
+}
+
 export function CorporateRouteRequestsPage({
   clientId,
   requests,
@@ -117,14 +129,17 @@ export function CorporateRouteRequestsPage({
   }
 
   function addStop(stop: CorporateStopRequest) {
+    const stopId = getStopId(stop);
+    if (stopId === null) return;
+
     setStopPlan((current) => {
-      if (current.some((item) => item.stopId === stop.stopId)) return current;
+      if (current.some((item) => item.stopId === stopId)) return current;
 
       return [
         ...current,
         {
           sequence: current.length + 1,
-          stopId: stop.stopId,
+          stopId,
           stopName: stop.stopName || "",
         },
       ];
@@ -262,10 +277,10 @@ export function CorporateRouteRequestsPage({
               </tr>
             </thead>
             <tbody>
-              {items.map((request) => (
+              {items.map((request, index) => (
                 <tr
                   className="border-b border-slate-100 last:border-0"
-                  key={request.routeId}
+                  key={getRequestKey(request, index)}
                 >
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">
@@ -290,8 +305,11 @@ export function CorporateRouteRequestsPage({
                   <td className="px-5 py-4 text-sm text-slate-700">
                     {request.plannedStops?.length ? (
                       <div className="flex max-w-[320px] flex-wrap gap-1.5">
-                        {request.plannedStops.map((stop) => (
-                          <Badge key={stop.stopId} variant="neutral">
+                        {request.plannedStops.map((stop, index) => (
+                          <Badge
+                            key={`${request.routeId ?? "route"}-${stop.stopId}-${index}`}
+                            variant="neutral"
+                          >
                             {stop.sequence}. {stop.stopName}
                             {stop.estimatedArrivalTime
                               ? ` / ${stop.estimatedArrivalTime}`
@@ -390,16 +408,17 @@ export function CorporateRouteRequestsPage({
                     </p>
                     <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
                       {stops.length ? (
-                        stops.map((stop) => {
+                        stops.map((stop, index) => {
+                          const stopId = getStopId(stop);
                           const isSelected = stopPlan.some(
-                            (item) => item.stopId === stop.stopId,
+                            (item) => item.stopId === stopId,
                           );
 
                           return (
                             <button
                               className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
-                              disabled={isSelected}
-                              key={stop.stopId}
+                              disabled={isSelected || stopId === null}
+                              key={stopId ?? `${stop.stopName ?? "stop"}-${index}`}
                               onClick={() => addStop(stop)}
                               type="button"
                             >

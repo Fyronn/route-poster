@@ -61,6 +61,14 @@ function InputField({
   );
 }
 
+function getEmployeeKey(employee: CorporateEmployee, index: number) {
+  return (
+    employee.userId ??
+    employee.employeeId ??
+    `${employee.clientId ?? "client"}-${employee.email ?? "employee"}-${index}`
+  );
+}
+
 export function CorporateEmployeesPage({
   clientId,
   employees,
@@ -162,10 +170,10 @@ export function CorporateEmployeesPage({
               </tr>
             </thead>
             <tbody>
-              {items.map((employee) => (
+              {items.map((employee, index) => (
                 <tr
                   className="border-b border-slate-100 last:border-0"
-                  key={employee.employeeId}
+                  key={getEmployeeKey(employee, index)}
                 >
                   <td className="px-5 py-4">
                     <p className="font-semibold text-slate-950">

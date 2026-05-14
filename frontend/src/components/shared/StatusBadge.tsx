@@ -5,29 +5,46 @@ const statusLabels: Record<string, string> = {
   active: "Aktif",
   inactive: "Pasif",
   draft: "Taslak",
-  completed: "Tamamlandı",
+  completed: "Tamamlandi",
   pending: "Bekliyor",
   waiting: "Onay Bekliyor",
   rejected: "Reddedildi",
-  revision_requested: "Revizyon İstendi",
-  approved: "Onaylandı",
-  submitted: "Gönderildi",
+  revision_requested: "Revizyon Istendi",
+  approved: "Onaylandi",
+  submitted: "Gonderildi",
   requested: "Talep Edildi",
+  plan_sent: "Plan Gonderildi",
   in_progress: "Devam Ediyor",
-  planned: "Planlandı",
+  planned: "Planlandi",
 };
 
 export function StatusBadge({ status }: { status: WorkflowStatus | string }) {
+  const normalizedStatus = normalizeStatus(status);
   const variant =
-    status === "completed" || status === "approved" || status === "active"
+    normalizedStatus === "completed" ||
+    normalizedStatus === "approved" ||
+    normalizedStatus === "active"
       ? "success"
-      : status === "rejected" || status === "inactive"
+      : normalizedStatus === "rejected" || normalizedStatus === "inactive"
         ? "danger"
-        : status === "revision_requested"
+        : normalizedStatus === "revision_requested"
           ? "warning"
-          : status === "submitted" || status === "waiting"
+          : normalizedStatus === "submitted" ||
+              normalizedStatus === "waiting" ||
+              normalizedStatus === "plan_sent"
             ? "info"
             : "neutral";
 
-  return <Badge variant={variant}>{statusLabels[status] ?? status}</Badge>;
+  return (
+    <Badge variant={variant}>
+      {statusLabels[normalizedStatus] ?? String(status)}
+    </Badge>
+  );
+}
+
+function normalizeStatus(status: WorkflowStatus | string) {
+  return String(status)
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[\s-]+/g, "_");
 }

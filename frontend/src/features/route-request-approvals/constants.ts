@@ -5,8 +5,8 @@ import type { RouteRequestApproval } from "./types";
 export const routeRequestApprovalsMockData: RouteRequestApproval[] =
   corporateRouteRequestsMockData.map((request, index) => ({
     ...request,
-    id: request.routeRequestId,
-    routeName: request.requestName || "İsimsiz",
+    id: request.routeId,
+    routeName: request.routeName || "Isimsiz",
     requestedBy: index % 2 === 0 ? "Jane Wilson" : "Mert Kaya",
     vehicleSuggestion:
       request.employeeCount && request.employeeCount > 25
