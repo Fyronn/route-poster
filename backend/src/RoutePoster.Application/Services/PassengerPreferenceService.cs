@@ -2,69 +2,59 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using RoutePoster.Application.DTOs.CorporateShuttle.Preferences;
 using RoutePoster.Application.Services.Interfaces;
 using RoutePoster.Domain.Entities;
-using RoutePoster.Infrastructure;
+using RoutePoster.Domain.Interfaces;
 
 namespace RoutePoster.Application.Services;
 
 public class PassengerPreferenceService : IPassengerPreferenceService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IPassengerPreferenceRepository _preferenceRepo;
+    private readonly IPassengerTemporaryPreferenceRepository _tempPreferenceRepo;
 
-    public PassengerPreferenceService(ApplicationDbContext context)
+    public PassengerPreferenceService(
+        IPassengerPreferenceRepository preferenceRepo, 
+        IPassengerTemporaryPreferenceRepository tempPreferenceRepo)
     {
-        _context = context;
+        _preferenceRepo = preferenceRepo;
+        _tempPreferenceRepo = tempPreferenceRepo;
     }
 
     public async Task<IEnumerable<PassengerPreferenceDto>> GetPreferencesAsync(int passengerId)
     {
-        var defaultPrefs = await _context.TblpassengerRoutePreferences
-            .Include(p => p.Route)
-            .Include(p => p.PickupStop)
-            .Where(p => p.PassengerId == passengerId)
-            .Select(p => new PassengerPreferenceDto
-            {
-                Id = p.Id,
-                RouteId = p.RouteId,
-                RouteName = p.Route.RouteName,
-                PickupStopId = p.PickupStopId,
-                PickupStopName = p.PickupStop.StopName,
-                IsTemporary = false
-            })
-            .ToListAsync();
+        var defaultEntities = await _preferenceRepo.GetWithDetailsByPassengerIdAsync(passengerId);
+        var tempEntities = await _tempPreferenceRepo.GetActiveWithDetailsByPassengerIdAsync(passengerId);
 
-        var tempPrefs = await _context.TblpassengerTemporaryPreferences
-            .Include(p => p.Route)
-            .Include(p => p.PickupStop)
-            .Where(p => p.PassengerId == passengerId && (p.IsActive ?? true))
-            .Select(p => new PassengerPreferenceDto
-            {
-                Id = p.Id,
-                RouteId = p.RouteId,
-                RouteName = p.Route.RouteName,
-                PickupStopId = p.PickupStopId,
-                PickupStopName = p.PickupStop.StopName,
-                IsTemporary = true,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate
-            })
-            .ToListAsync();
+        var defaultPrefs = defaultEntities.Select(p => new PassengerPreferenceDto
+        {
+            Id = p.Id,
+            RouteId = p.RouteId,
+            RouteName = p.Route.RouteName,
+            PickupStopId = p.PickupStopId,
+            PickupStopName = p.PickupStop.StopName,
+            IsTemporary = false
+        });
+
+        var tempPrefs = tempEntities.Select(p => new PassengerPreferenceDto
+        {
+            Id = p.Id,
+            RouteId = p.RouteId,
+            RouteName = p.Route.RouteName,
+            PickupStopId = p.PickupStopId,
+            PickupStopName = p.PickupStop.StopName,
+            IsTemporary = true,
+            StartDate = p.StartDate,
+            EndDate = p.EndDate
+        });
 
         return defaultPrefs.Concat(tempPrefs);
     }
 
     public async Task<PassengerPreferenceDto?> GetEffectivePreferenceAsync(int passengerId, DateOnly date)
     {
-        // 1. Check temporary preferences
-        var temp = await _context.TblpassengerTemporaryPreferences
-            .Include(p => p.Route)
-            .Include(p => p.PickupStop)
-            .Where(p => p.PassengerId == passengerId && (p.IsActive ?? true) && date >= p.StartDate && date <= p.EndDate)
-            .FirstOrDefaultAsync();
-
+        var temp = await _tempPreferenceRepo.GetEffectiveAsync(passengerId, date);
         if (temp != null)
         {
             return new PassengerPreferenceDto
@@ -80,13 +70,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             };
         }
 
-        // 2. Fallback to default
-        var def = await _context.TblpassengerRoutePreferences
-            .Include(p => p.Route)
-            .Include(p => p.PickupStop)
-            .Where(p => p.PassengerId == passengerId && (p.IsDefault ?? false))
-            .FirstOrDefaultAsync();
-
+        var def = await _preferenceRepo.GetDefaultWithDetailsAsync(passengerId);
         if (def != null)
         {
             return new PassengerPreferenceDto
@@ -105,19 +89,19 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
     public async Task SetDefaultPreferenceAsync(int passengerId, int routeId, int stopId)
     {
-        var existing = await _context.TblpassengerRoutePreferences
-            .Where(p => p.PassengerId == passengerId && p.RouteId == routeId)
-            .FirstOrDefaultAsync();
+        var existingList = await _preferenceRepo.FindAsync(p => p.PassengerId == passengerId && p.RouteId == routeId);
+        var existing = existingList.FirstOrDefault();
 
         if (existing != null)
         {
             existing.PickupStopId = stopId;
             existing.IsDefault = true;
             existing.UpdatedAt = DateTime.UtcNow;
+            _preferenceRepo.Update(existing);
         }
         else
         {
-            await _context.TblpassengerRoutePreferences.AddAsync(new TblpassengerRoutePreference
+            await _preferenceRepo.AddAsync(new TblpassengerRoutePreference
             {
                 PassengerId = passengerId,
                 RouteId = routeId,
@@ -127,7 +111,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             });
         }
 
-        await _context.SaveChangesAsync();
+        await _preferenceRepo.SaveChangesAsync();
     }
 
     public async Task AddTemporaryPreferenceAsync(int passengerId, CreateTemporaryPreferenceDto dto)
@@ -144,7 +128,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             CreatedAt = DateTime.UtcNow
         };
 
-        await _context.TblpassengerTemporaryPreferences.AddAsync(entity);
-        await _context.SaveChangesAsync();
+        await _tempPreferenceRepo.AddAsync(entity);
+        await _tempPreferenceRepo.SaveChangesAsync();
     }
 }
