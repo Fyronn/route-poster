@@ -8,6 +8,8 @@ public interface IPassengerPreferenceService
 {
     Task<IEnumerable<PassengerPreferenceDto>> GetPreferencesAsync(int passengerId);
     Task<PassengerPreferenceDto?> GetEffectivePreferenceAsync(int passengerId, DateOnly date);
-    Task SetDefaultPreferenceAsync(int passengerId, int routeId, int stopId);
+    Task SetDefaultPreferenceAsync(int passengerId, int routeId, int pickupStopId, int? dropoffStopId);
     Task AddTemporaryPreferenceAsync(int passengerId, CreateTemporaryPreferenceDto dto);
+    Task<DailyStatusDto> GetDailyStatusAsync(int passengerId, DateOnly date);
+    Task AddAbsenceRangeAsync(CreateAbsenceDto dto);
 }

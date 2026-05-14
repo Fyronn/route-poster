@@ -58,6 +58,7 @@ builder.Services.AddScoped<RoutePoster.Domain.Interfaces.ITripRepository, RouteP
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IVehicleRepository, RoutePoster.Infrastructure.Repositories.VehicleRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerPreferenceRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerTemporaryPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerTemporaryPreferenceRepository>();
+builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerAbsenceRepository, RoutePoster.Infrastructure.Repositories.PassengerAbsenceRepository>();
 
 // Services
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IClientService, RoutePoster.Application.Services.ClientService>();

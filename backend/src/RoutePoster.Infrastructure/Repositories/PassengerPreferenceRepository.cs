@@ -14,13 +14,13 @@ public class PassengerPreferenceRepository : GenericRepository<TblpassengerRoute
 
     public async Task<IEnumerable<TblpassengerRoutePreference>> GetWithDetailsByPassengerIdAsync(int passengerId)
     {
-        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop)
+        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
             .Where(p => p.PassengerId == passengerId).ToListAsync();
     }
 
     public async Task<TblpassengerRoutePreference?> GetDefaultWithDetailsAsync(int passengerId)
     {
-        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop)
+        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
             .FirstOrDefaultAsync(p => p.PassengerId == passengerId && (p.IsDefault ?? false));
     }
 }
@@ -31,14 +31,29 @@ public class PassengerTemporaryPreferenceRepository : GenericRepository<Tblpasse
 
     public async Task<IEnumerable<TblpassengerTemporaryPreference>> GetActiveWithDetailsByPassengerIdAsync(int passengerId)
     {
-        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop)
+        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
             .Where(p => p.PassengerId == passengerId && (p.IsActive ?? true)).ToListAsync();
     }
 
     public async Task<TblpassengerTemporaryPreference?> GetEffectiveAsync(int passengerId, DateOnly date)
     {
-        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop)
+        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
             .Where(p => p.PassengerId == passengerId && (p.IsActive ?? true) && date >= p.StartDate && date <= p.EndDate)
             .FirstOrDefaultAsync();
+    }
+}
+
+public class PassengerAbsenceRepository : GenericRepository<TblpassengerAbsence>, IPassengerAbsenceRepository
+{
+    public PassengerAbsenceRepository(ApplicationDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<TblpassengerAbsence>> GetByPassengerIdAsync(int passengerId)
+    {
+        return await _dbSet.Where(p => p.PassengerId == passengerId).ToListAsync();
+    }
+
+    public async Task<bool> IsAbsentAsync(int passengerId, DateOnly date)
+    {
+        return await _dbSet.AnyAsync(p => p.PassengerId == passengerId && p.AbsenceDate == date);
     }
 }

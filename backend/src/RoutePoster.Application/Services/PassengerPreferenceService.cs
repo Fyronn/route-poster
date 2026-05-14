@@ -13,13 +13,16 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 {
     private readonly IPassengerPreferenceRepository _preferenceRepo;
     private readonly IPassengerTemporaryPreferenceRepository _tempPreferenceRepo;
+    private readonly IPassengerAbsenceRepository _absenceRepo;
 
     public PassengerPreferenceService(
         IPassengerPreferenceRepository preferenceRepo, 
-        IPassengerTemporaryPreferenceRepository tempPreferenceRepo)
+        IPassengerTemporaryPreferenceRepository tempPreferenceRepo,
+        IPassengerAbsenceRepository absenceRepo)
     {
         _preferenceRepo = preferenceRepo;
         _tempPreferenceRepo = tempPreferenceRepo;
+        _absenceRepo = absenceRepo;
     }
 
     public async Task<IEnumerable<PassengerPreferenceDto>> GetPreferencesAsync(int passengerId)
@@ -34,6 +37,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             RouteName = p.Route.RouteName,
             PickupStopId = p.PickupStopId,
             PickupStopName = p.PickupStop.StopName,
+            DropoffStopId = p.DropoffStopId,
+            DropoffStopName = p.DropoffStop?.StopName,
             IsTemporary = false
         });
 
@@ -44,6 +49,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             RouteName = p.Route.RouteName,
             PickupStopId = p.PickupStopId,
             PickupStopName = p.PickupStop.StopName,
+            DropoffStopId = p.DropoffStopId,
+            DropoffStopName = p.DropoffStop?.StopName,
             IsTemporary = true,
             StartDate = p.StartDate,
             EndDate = p.EndDate
@@ -64,6 +71,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteName = temp.Route.RouteName,
                 PickupStopId = temp.PickupStopId,
                 PickupStopName = temp.PickupStop.StopName,
+                DropoffStopId = temp.DropoffStopId,
+                DropoffStopName = temp.DropoffStop?.StopName,
                 IsTemporary = true,
                 StartDate = temp.StartDate,
                 EndDate = temp.EndDate
@@ -80,6 +89,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteName = def.Route.RouteName,
                 PickupStopId = def.PickupStopId,
                 PickupStopName = def.PickupStop.StopName,
+                DropoffStopId = def.DropoffStopId,
+                DropoffStopName = def.DropoffStop?.StopName,
                 IsTemporary = false
             };
         }
@@ -87,14 +98,49 @@ public class PassengerPreferenceService : IPassengerPreferenceService
         return null;
     }
 
-    public async Task SetDefaultPreferenceAsync(int passengerId, int routeId, int stopId)
+    public async Task<DailyStatusDto> GetDailyStatusAsync(int passengerId, DateOnly date)
+    {
+        var isAbsent = await _absenceRepo.IsAbsentAsync(passengerId, date);
+        var pref = await GetEffectivePreferenceAsync(passengerId, date);
+
+        return new DailyStatusDto
+        {
+            IsAbsent = isAbsent,
+            Preference = pref
+        };
+    }
+
+    public async Task AddAbsenceRangeAsync(CreateAbsenceDto dto)
+    {
+        var currentDate = dto.StartDate;
+        while (currentDate <= dto.EndDate)
+        {
+            var alreadyExists = await _absenceRepo.IsAbsentAsync(dto.PassengerId, currentDate);
+            if (!alreadyExists)
+            {
+                await _absenceRepo.AddAsync(new TblpassengerAbsence
+                {
+                    PassengerId = dto.PassengerId,
+                    RouteId = dto.RouteId,
+                    AbsenceDate = currentDate,
+                    Description = dto.Reason,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            currentDate = currentDate.AddDays(1);
+        }
+        await _absenceRepo.SaveChangesAsync();
+    }
+
+    public async Task SetDefaultPreferenceAsync(int passengerId, int routeId, int pickupStopId, int? dropoffStopId)
     {
         var existingList = await _preferenceRepo.FindAsync(p => p.PassengerId == passengerId && p.RouteId == routeId);
         var existing = existingList.FirstOrDefault();
 
         if (existing != null)
         {
-            existing.PickupStopId = stopId;
+            existing.PickupStopId = pickupStopId;
+            existing.DropoffStopId = dropoffStopId;
             existing.IsDefault = true;
             existing.UpdatedAt = DateTime.UtcNow;
             _preferenceRepo.Update(existing);
@@ -105,7 +151,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             {
                 PassengerId = passengerId,
                 RouteId = routeId,
-                PickupStopId = stopId,
+                PickupStopId = pickupStopId,
+                DropoffStopId = dropoffStopId,
                 IsDefault = true,
                 CreatedAt = DateTime.UtcNow
             });
@@ -121,6 +168,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             PassengerId = passengerId,
             RouteId = dto.RouteId,
             PickupStopId = dto.PickupStopId,
+            DropoffStopId = dto.DropoffStopId,
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
             Description = dto.Description,
