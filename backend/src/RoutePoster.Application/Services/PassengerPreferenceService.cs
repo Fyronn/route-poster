@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RoutePoster.Application.DTOs.CorporateShuttle.Preferences;
+using RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests;
 using RoutePoster.Application.Services.Interfaces;
 using RoutePoster.Domain.Entities;
 using RoutePoster.Domain.Interfaces;
@@ -37,8 +38,10 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             RouteName = p.Route.RouteName,
             PickupStopId = p.PickupStopId,
             PickupStopName = p.PickupStop.StopName,
+            PickupStopAddress = p.PickupStop.Address,
             DropoffStopId = p.DropoffStopId,
             DropoffStopName = p.DropoffStop?.StopName,
+            DropoffStopAddress = p.DropoffStop?.Address,
             IsTemporary = false
         });
 
@@ -49,8 +52,10 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             RouteName = p.Route.RouteName,
             PickupStopId = p.PickupStopId,
             PickupStopName = p.PickupStop.StopName,
+            PickupStopAddress = p.PickupStop.Address,
             DropoffStopId = p.DropoffStopId,
             DropoffStopName = p.DropoffStop?.StopName,
+            DropoffStopAddress = p.DropoffStop?.Address,
             IsTemporary = true,
             StartDate = p.StartDate,
             EndDate = p.EndDate
@@ -71,8 +76,10 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteName = temp.Route.RouteName,
                 PickupStopId = temp.PickupStopId,
                 PickupStopName = temp.PickupStop.StopName,
+                PickupStopAddress = temp.PickupStop.Address,
                 DropoffStopId = temp.DropoffStopId,
                 DropoffStopName = temp.DropoffStop?.StopName,
+                DropoffStopAddress = temp.DropoffStop?.Address,
                 IsTemporary = true,
                 StartDate = temp.StartDate,
                 EndDate = temp.EndDate
@@ -89,8 +96,10 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteName = def.Route.RouteName,
                 PickupStopId = def.PickupStopId,
                 PickupStopName = def.PickupStop.StopName,
+                PickupStopAddress = def.PickupStop.Address,
                 DropoffStopId = def.DropoffStopId,
                 DropoffStopName = def.DropoffStop?.StopName,
+                DropoffStopAddress = def.DropoffStop?.Address,
                 IsTemporary = false
             };
         }
@@ -178,5 +187,32 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
         await _tempPreferenceRepo.AddAsync(entity);
         await _tempPreferenceRepo.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<RouteRequestDto>> GetPassengerRoutesAsync(int passengerId)
+    {
+        var preferences = await _preferenceRepo.GetWithDetailsByPassengerIdAsync(passengerId);
+        
+        // Sadece aktif rotaları alalım
+        var activeRoutes = preferences
+            .Select(p => p.Route)
+            .Where(r => r != null && r.IsActive == true)
+            .DistinctBy(r => r.Id);
+
+        return activeRoutes.Select(r => new RouteRequestDto
+        {
+            RouteId = r.Id,
+            ClientId = r.ClientId,
+            RouteName = r.RouteName,
+            Status = r.Status,
+            ShiftType = r.ShiftType,
+            Direction = r.Direction,
+            OperatingDays = r.OperatingDays,
+            PlannedStartTime = r.PlannedStartTime,
+            EstimatedDurationMinutes = r.EstimatedDurationMinutes,
+            IsActive = r.IsActive,
+            // Detaylı durak ve yolcu listesi istenirse buraya eklenebilir
+            // Şu an temel rota bilgilerini dönüyoruz
+        });
     }
 }

@@ -20,22 +20,20 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<RouteRequestDto>> GetAllAsync()
         {
-            var entities = await _routeRequestRepository.GetAllAsync();
-
-            //sadece pendingapproval ve active olanları getirsin
-            return entities.Where(r => r.Status == "PendingApproval" || r.Status == "Active").Select(MapToDto);
+            var entities = await _routeRequestRepository.GetAllWithDetailsAsync();
+            return entities.Where(r => r.Status == "Requested").Select(MapToDto);
         }
 
         public async Task<IEnumerable<RouteRequestDto>> GetByClientIdAsync(int clientId)
         {
-            var entities = await _routeRequestRepository.FindAsync(r => r.ClientId == clientId);
+            var entities = await _routeRequestRepository.GetByClientIdWithDetailsAsync(clientId);
             return entities.Select(MapToDto);
         }
 
         public async Task<IEnumerable<RouteRequestDto>> GetApprovedByClientIdAsync(int clientId)
         {
-            var entities = await _routeRequestRepository.FindAsync(r => r.ClientId == clientId && r.Status == "Approved");
-            return entities.Select(MapToDto);
+            var entities = await _routeRequestRepository.GetByClientIdWithDetailsAsync(clientId);
+            return entities.Where(r => r.Status == "Approved").Select(MapToDto);
         }
 
         public async Task<RouteRequestDto?> GetByIdAsync(int id)
@@ -119,7 +117,18 @@ namespace RoutePoster.Application.Services
                 OperatingDays = entity.OperatingDays,
                 PlannedStartTime = entity.PlannedStartTime,
                 EstimatedDurationMinutes = entity.EstimatedDurationMinutes,
-                IsActive = entity.IsActive
+                IsActive = entity.IsActive,
+                Stops = entity.TblrouteStops.Select(s => new RouteStopDto
+                {
+                    StopId = s.StopId,
+                    StopName = s.Stop?.StopName ?? "Unknown",
+                    StopOrder = s.StopOrder
+                }).OrderBy(s => s.StopOrder).ToList(),
+                Passengers = entity.TblpassengerRoutePreferences.Select(p => new RoutePassengerDto
+                {
+                    PassengerId = p.PassengerId,
+                    FullName = p.Passenger != null ? $"{p.Passenger.FirstName} {p.Passenger.LastName}" : "Unknown"
+                }).ToList()
             };
         }
     }

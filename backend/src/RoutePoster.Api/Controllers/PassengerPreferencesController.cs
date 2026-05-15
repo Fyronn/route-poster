@@ -77,4 +77,11 @@ public class PassengerPreferencesController : ControllerBase
         var preferences = await _preferenceService.GetPreferencesAsync(passengerId);
         return Ok(preferences);
     }
+
+    [HttpGet("routes")]
+    public async Task<IActionResult> GetPassengerRoutes(int passengerId)
+    {
+        var routes = await _preferenceService.GetPassengerRoutesAsync(passengerId);
+        return Ok(routes);
+    }
 }

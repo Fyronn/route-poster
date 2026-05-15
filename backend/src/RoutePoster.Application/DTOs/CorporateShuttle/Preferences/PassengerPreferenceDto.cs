@@ -9,8 +9,10 @@ public class PassengerPreferenceDto
     public string RouteName { get; set; } = string.Empty;
     public int PickupStopId { get; set; }
     public string PickupStopName { get; set; } = string.Empty;
+    public string? PickupStopAddress { get; set; }
     public int? DropoffStopId { get; set; }
     public string? DropoffStopName { get; set; }
+    public string? DropoffStopAddress { get; set; }
     public bool IsTemporary { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
