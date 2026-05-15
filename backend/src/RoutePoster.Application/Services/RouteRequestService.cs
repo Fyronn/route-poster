@@ -21,7 +21,7 @@ namespace RoutePoster.Application.Services
         public async Task<IEnumerable<RouteRequestDto>> GetAllAsync()
         {
             var entities = await _routeRequestRepository.GetAllWithDetailsAsync();
-            return entities.Where(r => r.Status == "Requested").Select(MapToDto);
+            return entities.Where(r => r.Status == "Requested" || r.Status == "Approved" || r.Status == "Rejected").Select(MapToDto);
         }
 
         public async Task<IEnumerable<RouteRequestDto>> GetByClientIdAsync(int clientId)

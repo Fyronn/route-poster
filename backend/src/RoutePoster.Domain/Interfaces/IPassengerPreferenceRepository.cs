@@ -20,5 +20,6 @@ public interface IPassengerTemporaryPreferenceRepository : IGenericRepository<Tb
 public interface IPassengerAbsenceRepository : IGenericRepository<TblpassengerAbsence>
 {
     Task<IEnumerable<TblpassengerAbsence>> GetByPassengerIdAsync(int passengerId);
+    Task<IEnumerable<TblpassengerAbsence>> GetWithDetailsByPassengerIdAsync(int passengerId);
     Task<bool> IsAbsentAsync(int passengerId, DateOnly date);
 }

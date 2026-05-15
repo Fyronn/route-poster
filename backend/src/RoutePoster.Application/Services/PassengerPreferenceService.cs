@@ -26,26 +26,23 @@ public class PassengerPreferenceService : IPassengerPreferenceService
         _absenceRepo = absenceRepo;
     }
 
-    public async Task<IEnumerable<PassengerPreferenceDto>> GetPreferencesAsync(int passengerId)
+    public async Task<IEnumerable<PassengerAbsenceDto>> GetAbsencesAsync(int passengerId)
     {
-        var defaultEntities = await _preferenceRepo.GetWithDetailsByPassengerIdAsync(passengerId);
-        var tempEntities = await _tempPreferenceRepo.GetActiveWithDetailsByPassengerIdAsync(passengerId);
-
-        var defaultPrefs = defaultEntities.Select(p => new PassengerPreferenceDto
+        var absences = await _absenceRepo.GetWithDetailsByPassengerIdAsync(passengerId);
+        return absences.Select(a => new PassengerAbsenceDto
         {
-            Id = p.Id,
-            RouteId = p.RouteId,
-            RouteName = p.Route.RouteName,
-            PickupStopId = p.PickupStopId,
-            PickupStopName = p.PickupStop.StopName,
-            PickupStopAddress = p.PickupStop.Address,
-            DropoffStopId = p.DropoffStopId,
-            DropoffStopName = p.DropoffStop?.StopName,
-            DropoffStopAddress = p.DropoffStop?.Address,
-            IsTemporary = false
-        });
+            Id = a.Id,
+            RouteId = a.RouteId,
+            RouteName = a.Route?.RouteName ?? "Unknown",
+            AbsenceDate = a.AbsenceDate,
+            Description = a.Description
+        }).OrderByDescending(a => a.AbsenceDate);
+    }
 
-        var tempPrefs = tempEntities.Select(p => new PassengerPreferenceDto
+    public async Task<IEnumerable<PassengerPreferenceDto>> GetTemporaryPreferencesAsync(int passengerId)
+    {
+        var tempEntities = await _tempPreferenceRepo.GetActiveWithDetailsByPassengerIdAsync(passengerId);
+        return tempEntities.Select(p => new PassengerPreferenceDto
         {
             Id = p.Id,
             RouteId = p.RouteId,
@@ -59,9 +56,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             IsTemporary = true,
             StartDate = p.StartDate,
             EndDate = p.EndDate
-        });
-
-        return defaultPrefs.Concat(tempPrefs);
+        }).OrderByDescending(p => p.StartDate);
     }
 
     public async Task<PassengerPreferenceDto?> GetEffectivePreferenceAsync(int passengerId, DateOnly date)

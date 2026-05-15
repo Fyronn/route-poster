@@ -17,10 +17,17 @@ public class PassengerPreferencesController : ControllerBase
         _preferenceService = preferenceService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetPreferences(int passengerId)
+    [HttpGet("absences")]
+    public async Task<IActionResult> GetAbsences(int passengerId)
     {
-        var preferences = await _preferenceService.GetPreferencesAsync(passengerId);
+        var absences = await _preferenceService.GetAbsencesAsync(passengerId);
+        return Ok(absences);
+    }
+
+    [HttpGet("temporary")]
+    public async Task<IActionResult> GetTemporaryPreferences(int passengerId)
+    {
+        var preferences = await _preferenceService.GetTemporaryPreferencesAsync(passengerId);
         return Ok(preferences);
     }
 
@@ -67,15 +74,6 @@ public class PassengerPreferencesController : ControllerBase
     {
         await _preferenceService.AddTemporaryPreferenceAsync(passengerId, dto);
         return Ok(new { Message = "Temporary preference added successfully." });
-    }
-
-    [HttpGet("activities")]
-    public async Task<IActionResult> GetActivities(int passengerId)
-    {
-        // This returns combined list of preferences (default + temp)
-        // You might want to also include absences in a real scenario
-        var preferences = await _preferenceService.GetPreferencesAsync(passengerId);
-        return Ok(preferences);
     }
 
     [HttpGet("routes")]

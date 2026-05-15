@@ -43,3 +43,12 @@ public class DailyStatusDto
     public string? AbsenceReason { get; set; }
     public PassengerPreferenceDto? Preference { get; set; }
 }
+
+public class PassengerAbsenceDto
+{
+    public int Id { get; set; }
+    public int RouteId { get; set; }
+    public string RouteName { get; set; } = string.Empty;
+    public DateOnly AbsenceDate { get; set; }
+    public string? Description { get; set; }
+}
