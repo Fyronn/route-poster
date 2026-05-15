@@ -16,15 +16,16 @@ export async function getShuttlePlanRequests(options: ServiceOptions = {}) {
     );
 
     return requests.map<ShuttlePlanRequest>((request) => ({
+      clientName: request.clientName || `Client #${request.clientId ?? "-"}`,
+      employeeCount: request.passengerIds?.length ?? request.employeeCount ?? 0,
       id: request.routeId,
-      clientName: request.clientName || "Bilinmiyor",
-      submittedBy: "Şirket yöneticisi",
-      submittedAt: new Date().toISOString(),
-      employeeCount: request.employeeCount || 0,
-      stopCount: request.stopCount || 0,
       routeCount: 1,
-      summary: `${request.routeName || "İsimsiz rota"} için servis planı talebi.`,
-      status: (request.status?.toLowerCase() === "requested" ? "submitted" : request.status?.toLowerCase()) as ShuttlePlanRequest["status"],
+      status: normalizePlanStatus(request.status),
+      stopCount:
+        request.stopIds?.length ?? request.plannedStops?.length ?? request.stopCount ?? 0,
+      submittedAt: new Date().toISOString(),
+      submittedBy: "Sirket yoneticisi",
+      summary: `${request.routeName || "Isimsiz rota"} icin servis plani talebi.`,
     }));
   } catch {
     return shuttlePlanRequestsMockData;
@@ -33,12 +34,28 @@ export async function getShuttlePlanRequests(options: ServiceOptions = {}) {
 
 export async function updateShuttlePlanRequestStatus(
   routeId: number,
-  status: "Onaylandi" | "Reddedildi" | "Revizyon Istendi",
+  status: "Approved" | "Rejected",
+  rejectionReason?: string,
 ) {
   return putRequest<{ message?: string }>(
     `/api/shuttle-plan-requests/route/${routeId}/status`,
     {
-      Statu: status,
+      comments: rejectionReason,
+      rejectionReason,
+      status,
     },
   );
+}
+
+function normalizePlanStatus(status?: string | null): ShuttlePlanRequest["status"] {
+  const normalized = String(status ?? "")
+    .trim()
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[\s-]+/g, "_");
+
+  if (normalized === "approved" || normalized === "active") return "approved";
+  if (normalized === "rejected") return "rejected";
+
+  return "requested";
 }

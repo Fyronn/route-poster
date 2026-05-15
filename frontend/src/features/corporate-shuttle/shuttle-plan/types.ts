@@ -7,6 +7,6 @@ export type ShuttlePlanSummary = {
   stopCount: number;
   routeRequestCount: number;
   submittedAt?: string;
-  status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested";
+  status: "draft" | "submitted" | "approved" | "rejected";
   routes: CorporateRouteRequest[];
 };

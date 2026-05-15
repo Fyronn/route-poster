@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Route, Send, Users, MapPin } from "lucide-react";
+import { Eye, MapPin, Route, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -10,94 +9,52 @@ import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDate } from "@/lib/utils";
 
-import { submitCorporateShuttlePlan } from "../services/shuttle-plan.service";
 import type { ShuttlePlanSummary } from "../types";
 
 export function CorporateShuttlePlanPage({
-  clientId,
   plan,
 }: {
   clientId: number;
   plan: ShuttlePlanSummary;
 }) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmitPlan() {
-    setError(null);
-    setMessage(null);
-    setIsSubmitting(true);
-
-    try {
-      await submitCorporateShuttlePlan(clientId);
-      setMessage("Servis plani ABC Turizm onayina gonderildi.");
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Servis plani gonderilemedi.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <PageSection
       action={
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button variant="secondary">
-            <Eye className="h-4 w-4" />
-            Planı İncele
-          </Button>
-          <Button disabled={isSubmitting} onClick={handleSubmitPlan}>
-            <Send className="h-4 w-4" />
-            ABC Turizm&apos;e Gönder
-          </Button>
-        </div>
+        <Button variant="secondary">
+          <Eye className="h-4 w-4" />
+          Plani Incele
+        </Button>
       }
-      description="Şirket yöneticisinin hazırladığı çalışan, durak ve rota taleplerinin servis planı özeti."
-      eyebrow="Corporate Shuttle"
-      title="Shuttle Plan"
+      description="Servis yoneticisinin olusturdugu calisan, durak ve rota taleplerinin servis plani ozeti."
+      eyebrow="Servis Yonetimi"
+      title="Servis Plani"
     >
-      {message ? (
-        <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-          {message}
-        </div>
-      ) : null}
-      {error ? (
-        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-          {error}
-        </div>
-      ) : null}
-
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <MetricCard
-          hint="Plan kapsamındaki çalışan"
+          hint="Plan kapsamindaki calisan"
           icon={Users}
-          label="Çalışan"
+          label="Calisan"
           value={plan.employeeCount}
         />
         <MetricCard
-          hint="Önerilen durak noktası"
+          hint="Onerilen durak noktasi"
           icon={MapPin}
           label="Durak"
           value={plan.stopCount}
         />
         <MetricCard
-          hint="Plan içindeki rota talebi"
+          hint="Plan icindeki rota talebi"
           icon={Route}
           label="Rota Talebi"
           value={plan.routeRequestCount}
         />
         <Card className="p-5">
-          <p className="text-sm font-medium text-slate-500">Gönderim Durumu</p>
+          <p className="text-sm font-medium text-slate-500">Durum</p>
           <div className="mt-3">
             <StatusBadge status={plan.status} />
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            {plan.submittedAt ? formatDate(plan.submittedAt) : "Henüz gönderilmedi"}
+            {plan.submittedAt ? formatDate(plan.submittedAt) : "Rota talepleri direkt onaya duser"}
           </p>
         </Card>
       </div>
@@ -105,8 +62,8 @@ export function CorporateShuttlePlanPage({
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader
-            description="Admin onayından sonra bu talepler gerçek service route kayıtlarına dönüşür."
-            title="Plan Rota Özeti"
+            description="Admin onayindan sonra talepler operasyon rotasina aktarilir."
+            title="Plan Rota Ozeti"
           />
           <CardContent className="space-y-4">
             {plan.routes.map((route) => (
@@ -120,15 +77,15 @@ export function CorporateShuttlePlanPage({
                       {route.routeName || "-"}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
-                      {route.startPoint || "-"} → {route.endPoint || "-"}
+                      {route.startPoint || "-"} - {route.endPoint || "-"}
                     </p>
                   </div>
-                  <StatusBadge status={route.status?.toLowerCase() || "requested"} />
+                  <StatusBadge status={route.status || "requested"} />
                 </div>
                 <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
-                  <span>{route.employeeCount || 0} çalışan</span>
+                  <span>{route.employeeCount || 0} calisan</span>
                   <span>{route.stopCount || 0} durak</span>
-                  <span>{route.estimatedDurationMinutes || 0} dk tahmini süre</span>
+                  <span>{route.estimatedDurationMinutes || 0} dk tahmini sure</span>
                 </div>
               </div>
             ))}
@@ -145,7 +102,7 @@ export function CorporateShuttlePlanPage({
               </p>
             </div>
             <div>
-              <p className="text-slate-500">Gönderen Yönetici</p>
+              <p className="text-slate-500">Gonderen Yonetici</p>
               <p className="mt-1 font-semibold text-slate-950">
                 {plan.managerName}
               </p>
@@ -153,8 +110,8 @@ export function CorporateShuttlePlanPage({
             <div>
               <p className="text-slate-500">Admin Aksiyonu</p>
               <p className="mt-1 text-slate-700">
-                Plan, shuttle plan requests ekranında onaylanır, reddedilir veya
-                revizyon istenir.
+                Rota talebi olusturuldugunda direkt admin onay ekranina duser.
+                Admin talebi onaylar veya zorunlu red sebebiyle reddeder.
               </p>
             </div>
           </div>

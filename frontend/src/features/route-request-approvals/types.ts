@@ -7,5 +7,5 @@ export type RouteRequestApproval = CorporateRouteRequest & {
   assignedVehicle?: string;
   requestedBy: string;
   vehicleSuggestion: string;
-  decisionNote?: string;
+  decisionNote?: string | null;
 };

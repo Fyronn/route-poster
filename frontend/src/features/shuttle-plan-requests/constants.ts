@@ -11,7 +11,7 @@ export const shuttlePlanRequestsMockData: ShuttlePlanRequest[] = [
     routeCount: 7,
     summary:
       "İstanbul Avrupa ve Anadolu yakası sabah/akşam personel servis planı.",
-    status: "submitted",
+    status: "requested",
   },
   {
     id: 9002,
@@ -22,8 +22,8 @@ export const shuttlePlanRequestsMockData: ShuttlePlanRequest[] = [
     stopCount: 21,
     routeCount: 4,
     summary:
-      "Ataşehir merkezli sabah geliş ve akşam dönüş servis planı revizyon bekliyor.",
-    status: "revision_requested",
+      "Ataşehir merkezli sabah geliş ve akşam dönüş servis planı reddedildi.",
+    status: "rejected",
   },
   {
     id: 9003,
@@ -33,8 +33,7 @@ export const shuttlePlanRequestsMockData: ShuttlePlanRequest[] = [
     employeeCount: 248,
     stopCount: 44,
     routeCount: 11,
-    summary:
-      "Kemalpaşa fabrika vardiya servisleri için onaylanmış plan.",
+    summary: "Kemalpaşa fabrika vardiya servisleri için onaylanmış plan.",
     status: "approved",
   },
 ];

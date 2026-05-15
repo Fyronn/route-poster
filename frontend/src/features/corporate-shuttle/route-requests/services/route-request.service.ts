@@ -41,6 +41,7 @@ export async function createCorporateRouteRequest(
       stopId: number;
       stopName: string;
     }>;
+    passengerIds: number[];
   },
 ) {
   assertClientId(clientId);
@@ -54,13 +55,17 @@ export async function createCorporateRouteRequest(
       direction: payload.direction,
       operatingDays: payload.operatingDays,
       plannedStartTime: payload.plannedStartTime,
-      // mapping workingDays / plannedStops etc manually if backend still doesn't support them on this particular DTO
+      passengerIds: payload.passengerIds,
+      stopIds: payload.plannedStops?.map((stop) => stop.stopId) ?? [],
     },
   );
 
   return {
     ...request,
+    passengerIds: payload.passengerIds,
     plannedStops: payload.plannedStops,
+    status: "Requested",
+    stopIds: payload.plannedStops?.map((stop) => stop.stopId) ?? [],
   };
 }
 

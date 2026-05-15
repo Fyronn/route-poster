@@ -1,4 +1,4 @@
-import { Check, Eye, RefreshCcw, Send, X } from "lucide-react";
+import { Check, Eye, Send, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -32,7 +32,7 @@ export function ShuttlePlanRequestsPage({
           hint="Admin kararı bekliyor"
           icon={Send}
           label="Bekleyen"
-          value={requests.filter((request) => request.status === "submitted").length}
+          value={requests.filter((request) => request.status === "requested").length}
         />
         <MetricCard
           hint="Operasyona aktarılmaya hazır"
@@ -42,18 +42,15 @@ export function ShuttlePlanRequestsPage({
         />
         <MetricCard
           hint="Şirket yöneticisine geri dönecek"
-          icon={RefreshCcw}
-          label="Revizyon"
-          value={
-            requests.filter((request) => request.status === "revision_requested")
-              .length
-          }
+          icon={X}
+          label="Reddedilen"
+          value={requests.filter((request) => request.status === "rejected").length}
         />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <TableShell
-          description="Onayla, reddet veya revizyon iste aksiyonları plan seviyesinde kurgulanır."
+          description="Onayla veya zorunlu gerekce ile reddet aksiyonlari plan seviyesinde kurgulanir."
           searchPlaceholder="Client veya gönderen ara..."
           title="Plan Talepleri"
         >
@@ -112,10 +109,6 @@ export function ShuttlePlanRequestsPage({
                         <Check className="h-3.5 w-3.5" />
                         Onayla
                       </Button>
-                      <Button size="sm" variant="secondary">
-                        <RefreshCcw className="h-3.5 w-3.5" />
-                        Revizyon
-                      </Button>
                       <Button size="sm" variant="danger">
                         <X className="h-3.5 w-3.5" />
                         Reddet
@@ -140,7 +133,7 @@ export function ShuttlePlanRequestsPage({
           </div>
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
             Seçili plan için rota kırılımı, durak yoğunluğu, tahmini araç
-            ihtiyacı ve revizyon notları bu panelde gösterilebilir. Backend
+            ihtiyacı ve karar notları bu panelde gösterilebilir. Backend
             detay endpointi geldiğinde modal yerine bu panel beslenecek.
           </div>
         </Card>

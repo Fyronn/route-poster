@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Route, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Route, Trash2, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ import { Modal } from "@/components/shared/Modal";
 import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
+import type { CorporateEmployee } from "@/features/corporate-shuttle/employees/types";
 import type { CorporateStopRequest } from "@/features/corporate-shuttle/stops/types";
 
 import { createCorporateRouteRequest } from "../services/route-request.service";
@@ -101,6 +102,15 @@ function getStopId(stop: CorporateStopRequest) {
   return Number.isFinite(stopId) && stopId > 0 ? stopId : null;
 }
 
+function getEmployeeId(employee: CorporateEmployee) {
+  const employeeId = Number(employee.userId ?? employee.employeeId);
+  return Number.isFinite(employeeId) && employeeId > 0 ? employeeId : null;
+}
+
+function getEmployeeName(employee: CorporateEmployee) {
+  return [employee.firstName, employee.lastName].filter(Boolean).join(" ") || "Isimsiz calisan";
+}
+
 function getRequestKey(request: CorporateRouteRequest, index: number) {
   return (
     request.routeId ??
@@ -108,24 +118,98 @@ function getRequestKey(request: CorporateRouteRequest, index: number) {
   );
 }
 
+function getRouteStopCount(request: CorporateRouteRequest) {
+  return (
+    request.stops?.length ??
+    request.stopIds?.length ??
+    request.plannedStops?.length ??
+    request.stopCount ??
+    null
+  );
+}
+
+function getRoutePassengerCount(request: CorporateRouteRequest) {
+  return (
+    request.passengers?.length ??
+    request.passengerIds?.length ??
+    request.selectedPassengers?.length ??
+    request.employeeCount ??
+    null
+  );
+}
+
+function formatRouteScope(request: CorporateRouteRequest) {
+  return `${getRouteStopCount(request) ?? "-"} durak / ${
+    getRoutePassengerCount(request) ?? "-"
+  } calisan`;
+}
+
+function normalizeStatus(status?: string | null) {
+  const normalized = String(status ?? "")
+    .trim()
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[\s-]+/g, "_");
+
+  return normalized;
+}
+
+function isRequested(status?: string | null) {
+  return normalizeStatus(status) === "requested";
+}
+
+function isApproved(status?: string | null) {
+  return normalizeStatus(status) === "approved";
+}
+
+function isRejected(status?: string | null) {
+  return normalizeStatus(status) === "rejected";
+}
+
+function getDecisionReason(request: CorporateRouteRequest) {
+  return (
+    request.rejectionReason ||
+    request.rejectReason ||
+    request.decisionNote ||
+    request.comments ||
+    request.operatorNote ||
+    null
+  );
+}
+
 export function CorporateRouteRequestsPage({
   clientId,
+  employees,
   requests,
   stops,
 }: {
   clientId: number;
+  employees: CorporateEmployee[];
   requests: CorporateRouteRequest[];
   stops: CorporateStopRequest[];
 }) {
   const [items, setItems] = useState(requests);
   const [form, setForm] = useState(emptyForm);
   const [stopPlan, setStopPlan] = useState<RouteRequestStopPlan[]>([]);
+  const [selectedPassengerIds, setSelectedPassengerIds] = useState<number[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function updateField(key: keyof RouteRequestFormState, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function togglePassenger(employee: CorporateEmployee) {
+    const employeeId = getEmployeeId(employee);
+    if (employeeId === null) return;
+
+    setSelectedPassengerIds((current) =>
+      current.includes(employeeId)
+        ? current.filter((id) => id !== employeeId)
+        : [...current, employeeId],
+    );
   }
 
   function addStop(stop: CorporateStopRequest) {
@@ -178,6 +262,7 @@ export function CorporateRouteRequestsPage({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setMessage(null);
     setIsSubmitting(true);
 
     try {
@@ -185,8 +270,13 @@ export function CorporateRouteRequestsPage({
         throw new Error("Rota talebi icin en az bir durak secmelisiniz.");
       }
 
+      if (selectedPassengerIds.length === 0) {
+        throw new Error("Rota talebi icin en az bir calisan secmelisiniz.");
+      }
+
       const createdRequest = await createCorporateRouteRequest(clientId, {
         direction: form.direction,
+        passengerIds: selectedPassengerIds,
         plannedStartTime: `${form.plannedStartTime}:00`,
         plannedStops: stopPlan,
         routeName: form.routeName,
@@ -194,10 +284,18 @@ export function CorporateRouteRequestsPage({
         operatingDays: form.workingDays,
       });
 
-      setItems((current) => [createdRequest, ...current]);
+      setItems((current) => [
+        {
+          ...createdRequest,
+          status: "Requested",
+        },
+        ...current,
+      ]);
       setForm(emptyForm);
       setStopPlan([]);
+      setSelectedPassengerIds([]);
       setIsOpen(false);
+      setMessage("Rota talebi olusturuldu ve ABC Turizm onayina dustu.");
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -216,6 +314,7 @@ export function CorporateRouteRequestsPage({
           <Button
             onClick={() => {
               setError(null);
+              setMessage(null);
               setIsOpen(true);
             }}
           >
@@ -223,11 +322,22 @@ export function CorporateRouteRequestsPage({
             Rota Talebi Ekle
           </Button>
         }
-        description="Servis yoneticisi kendi kurumuna ait duraklari siraya alarak rota talebi olusturur."
-        eyebrow="Corporate Shuttle"
-        title="Route Requests"
+        description="Duraklari siralayip calisanlari secerek rota talebi olusturun. Talep direkt ABC Turizm onayina duser."
+        eyebrow="Servis Yonetimi"
+        title="Rota Talepleri"
       >
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
+        {message ? (
+          <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {message}
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="mb-6 grid gap-4 md:grid-cols-4">
           <MetricCard
             hint="Kurum tarafindan girildi"
             icon={Route}
@@ -237,14 +347,20 @@ export function CorporateRouteRequestsPage({
           <MetricCard
             hint="ABC Turizm incelemesi bekliyor"
             icon={Route}
-            label="Gonderilen"
-            value={items.filter((request) => request.status?.toLowerCase() === "submitted").length}
+            label="Onay Bekleyen"
+            value={items.filter((request) => isRequested(request.status)).length}
           />
           <MetricCard
-            hint="Operasyona aktarilabilir"
+            hint="Admin tarafindan onaylandi"
             icon={Route}
-            label="Onayli Rota"
-            value={items.filter((request) => request.status?.toLowerCase() === "approved").length}
+            label="Onaylanan"
+            value={items.filter((request) => isApproved(request.status)).length}
+          />
+          <MetricCard
+            hint="Red sebebiyle geri donen"
+            icon={X}
+            label="Reddedilen"
+            value={items.filter((request) => isRejected(request.status)).length}
           />
         </div>
 
@@ -260,16 +376,10 @@ export function CorporateRouteRequestsPage({
                   Rota
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Baslangic / Bitis
+                  Plan
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Vardiya
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Durak Sirasi
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                  Tahmin
+                  Durak / Calisan
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                   Durum
@@ -288,12 +398,6 @@ export function CorporateRouteRequestsPage({
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
                       {request.clientName || "-"}
-                    </p>
-                  </td>
-                  <td className="px-5 py-4 text-sm text-slate-700">
-                    <p>{request.startPoint || "-"}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {request.endPoint || "-"}
                     </p>
                   </td>
                   <td className="px-5 py-4">
@@ -318,15 +422,16 @@ export function CorporateRouteRequestsPage({
                         ))}
                       </div>
                     ) : (
-                      `${request.stopCount || 0} durak / ${request.employeeCount || 0} calisan`
+                      formatRouteScope(request)
                     )}
                   </td>
-                  <td className="px-5 py-4 text-sm text-slate-700">
-                    {request.estimatedDistanceKm || 0} km /{" "}
-                    {request.estimatedDurationMinutes || 0} dk
-                  </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={request.status?.toLowerCase() || "requested"} />
+                    <StatusBadge status={request.status || "Draft"} />
+                    {isRejected(request.status) && getDecisionReason(request) ? (
+                      <p className="mt-2 max-w-[280px] text-xs font-medium text-red-600">
+                        Red sebebi: {getDecisionReason(request)}
+                      </p>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -510,6 +615,65 @@ export function CorporateRouteRequestsPage({
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-950">
+                      Calisanlar
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Bu rotada tasinacak calisanlari secin.
+                    </p>
+                  </div>
+                  <Badge variant="teal">
+                    {selectedPassengerIds.length} calisan
+                  </Badge>
+                </div>
+
+                <div className="mt-4 grid max-h-64 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
+                  {employees.length ? (
+                    employees.map((employee, index) => {
+                      const employeeId = getEmployeeId(employee);
+                      const isSelected =
+                        employeeId !== null &&
+                        selectedPassengerIds.includes(employeeId);
+
+                      return (
+                        <button
+                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={employeeId === null}
+                          key={employeeId ?? `${employee.email ?? "employee"}-${index}`}
+                          onClick={() => togglePassenger(employee)}
+                          type="button"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold text-slate-900">
+                              {getEmployeeName(employee)}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-slate-500">
+                              {employee.email || employee.phone || "-"}
+                            </span>
+                          </span>
+                          <span
+                            className={
+                              isSelected
+                                ? "h-5 w-5 rounded-full border border-teal-500 bg-teal-600"
+                                : "h-5 w-5 rounded-full border border-slate-300 bg-white"
+                            }
+                          />
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 md:col-span-2">
+                      Once calisan ekleyin.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
