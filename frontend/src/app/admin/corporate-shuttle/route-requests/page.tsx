@@ -1,5 +1,6 @@
 import { CorporateRouteRequestsPage } from "@/features/corporate-shuttle/route-requests/components/CorporateRouteRequestsPage";
 import { getCorporateRouteRequests } from "@/features/corporate-shuttle/route-requests/services/route-request.service";
+import { getCorporateEmployees } from "@/features/corporate-shuttle/employees/services/employee.service";
 import { getCorporateStops } from "@/features/corporate-shuttle/stops/services/stop.service";
 import {
   ensureServiceManagerAccess,
@@ -16,6 +17,9 @@ export default async function AdminCorporateRouteRequestsPage() {
   const requests = await getCorporateRouteRequests(clientId, {
     authToken: session.token,
   });
+  const employees = await getCorporateEmployees(clientId, {
+    authToken: session.token,
+  });
   const stops = await getCorporateStops(clientId, {
     authToken: session.token,
   });
@@ -23,6 +27,7 @@ export default async function AdminCorporateRouteRequestsPage() {
   return (
     <CorporateRouteRequestsPage
       clientId={clientId}
+      employees={employees}
       requests={requests}
       stops={stops}
     />

@@ -9,11 +9,8 @@ const statusLabels: Record<string, string> = {
   pending: "Bekliyor",
   waiting: "Onay Bekliyor",
   rejected: "Reddedildi",
-  revision_requested: "Revizyon Istendi",
   approved: "Onaylandi",
-  submitted: "Gonderildi",
   requested: "Talep Edildi",
-  plan_sent: "Plan Gonderildi",
   in_progress: "Devam Ediyor",
   planned: "Planlandi",
 };
@@ -27,13 +24,10 @@ export function StatusBadge({ status }: { status: WorkflowStatus | string }) {
       ? "success"
       : normalizedStatus === "rejected" || normalizedStatus === "inactive"
         ? "danger"
-        : normalizedStatus === "revision_requested"
-          ? "warning"
-          : normalizedStatus === "submitted" ||
-              normalizedStatus === "waiting" ||
-              normalizedStatus === "plan_sent"
-            ? "info"
-            : "neutral";
+        : normalizedStatus === "requested" ||
+            normalizedStatus === "waiting"
+          ? "info"
+          : "neutral";
 
   return (
     <Badge variant={variant}>
@@ -45,6 +39,7 @@ export function StatusBadge({ status }: { status: WorkflowStatus | string }) {
 function normalizeStatus(status: WorkflowStatus | string) {
   return String(status)
     .trim()
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
     .toLocaleLowerCase("tr-TR")
     .replace(/[\s-]+/g, "_");
 }

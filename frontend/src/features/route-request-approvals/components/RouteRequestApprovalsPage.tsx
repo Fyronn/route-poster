@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Check, Eye, RefreshCcw, Route, X } from "lucide-react";
+import { Check, Eye, Route, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MetricCard } from "@/components/shared/MetricCard";
@@ -11,41 +10,124 @@ import { Modal } from "@/components/shared/Modal";
 import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
-import type { Driver } from "@/features/drivers/types";
-import { createTrip } from "@/features/trips/services/trip.service";
-import type { Vehicle } from "@/features/vehicles/types";
 
 import { decideRouteRequest } from "../services/route-request-approval.service";
 import type { RouteRequestApproval } from "../types";
 
-type AssignmentFormState = {
-  driverId: string;
-  serviceDate: string;
-  startTime: string;
-  vehicleId: string;
-};
+function normalizeStatus(status?: string | null) {
+  return String(status ?? "")
+    .trim()
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[\s-]+/g, "_");
+}
 
-const today = new Date().toISOString().slice(0, 10);
+function isPending(status?: string | null) {
+  return normalizeStatus(status) === "requested";
+}
+
+function isApproved(status?: string | null) {
+  return normalizeStatus(status) === "approved";
+}
+
+function isRejected(status?: string | null) {
+  return normalizeStatus(status) === "rejected";
+}
+
+function getDecisionReason(route: RouteRequestApproval) {
+  return (
+    route.rejectionReason ||
+    route.rejectReason ||
+    route.decisionNote ||
+    route.comments ||
+    route.operatorNote ||
+    null
+  );
+}
+
+function getStopCount(route: RouteRequestApproval) {
+  return (
+    route.stops?.length ??
+    route.plannedStops?.length ??
+    route.stopIds?.length ??
+    route.stopCount ??
+    null
+  );
+}
+
+function getPassengerCount(route: RouteRequestApproval) {
+  return (
+    route.passengers?.length ??
+    route.selectedPassengers?.length ??
+    route.passengerIds?.length ??
+    route.employeeCount ??
+    null
+  );
+}
+
+function formatRouteScope(route: RouteRequestApproval) {
+  return `${getStopCount(route) ?? "-"} durak / ${
+    getPassengerCount(route) ?? "-"
+  } calisan`;
+}
+
+function getOrderedStops(route: RouteRequestApproval) {
+  if (route.plannedStops?.length) {
+    return route.plannedStops;
+  }
+
+  if (!route.stops?.length) return [];
+
+  return [...route.stops]
+    .sort(
+      (first, second) =>
+        (first.stopOrder ?? Number.MAX_SAFE_INTEGER) -
+        (second.stopOrder ?? Number.MAX_SAFE_INTEGER),
+    )
+    .map((stop, index) => ({
+      sequence: stop.stopOrder ?? index + 1,
+      stopId: stop.stopId,
+      stopName: stop.stopName || `Durak #${stop.stopId}`,
+    }));
+}
+
+function getRoutePassengers(route: RouteRequestApproval) {
+  if (route.selectedPassengers?.length) {
+    return route.selectedPassengers;
+  }
+
+  if (!route.passengers?.length) return [];
+
+  return route.passengers.map((passenger) => ({
+    passengerId: passenger.passengerId,
+    passengerName: passenger.fullName || `Calisan #${passenger.passengerId}`,
+  }));
+}
+
+function formatStopPreview(route: RouteRequestApproval) {
+  const stops = getOrderedStops(route);
+
+  if (!stops.length) return "Durak detayi yok";
+
+  const preview = stops
+    .slice(0, 3)
+    .map((stop) => `${stop.sequence}. ${stop.stopName}`)
+    .join(" -> ");
+
+  return stops.length > 3 ? `${preview} +${stops.length - 3}` : preview;
+}
 
 export function RouteRequestApprovalsPage({
   approvals,
-  drivers,
-  vehicles,
 }: {
   approvals: RouteRequestApproval[];
-  drivers: Driver[];
-  vehicles: Vehicle[];
 }) {
   const [items, setItems] = useState(approvals);
   const [selectedId, setSelectedId] = useState(approvals[0]?.id ?? null);
-  const [assignmentRoute, setAssignmentRoute] =
+  const [rejectionRoute, setRejectionRoute] =
     useState<RouteRequestApproval | null>(null);
-  const [assignmentForm, setAssignmentForm] = useState<AssignmentFormState>({
-    driverId: drivers[0]?.userId ? String(drivers[0].userId) : "",
-    serviceDate: today,
-    startTime: "07:30",
-    vehicleId: vehicles[0]?.vehicleId ? String(vehicles[0].vehicleId) : "",
-  });
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionError, setRejectionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,52 +137,48 @@ export function RouteRequestApprovalsPage({
     [items, selectedId],
   );
 
-  function updateAssignmentField(
-    key: keyof AssignmentFormState,
-    value: string,
-  ) {
-    setAssignmentForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function openAssignment(route: RouteRequestApproval) {
+  function openRejection(route: RouteRequestApproval) {
     setError(null);
     setMessage(null);
-    setAssignmentRoute(route);
-    setAssignmentForm((current) => ({
-      ...current,
-      driverId: current.driverId || (drivers[0]?.userId ? String(drivers[0].userId) : ""),
-      startTime: route.plannedStartTime?.slice(0, 5) || current.startTime,
-      vehicleId:
-        current.vehicleId || (vehicles[0]?.vehicleId ? String(vehicles[0].vehicleId) : ""),
-    }));
+    setRejectionError(null);
+    setRejectionReason(getDecisionReason(route) || "");
+    setRejectionRoute(route);
   }
 
-  async function updateDecision(
-    routeId: number,
-    status: "Onaylandi" | "Reddedildi" | "Revizyon Istendi",
-  ) {
+  async function handleRejectSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!rejectionRoute) return;
+
+    const trimmedReason = rejectionReason.trim();
+    if (!trimmedReason) {
+      setRejectionError("Red sebebi zorunludur.");
+      return;
+    }
+
     setError(null);
     setMessage(null);
     setIsSubmitting(true);
+    setRejectionError(null);
 
     try {
-      await decideRouteRequest(routeId, status);
+      await decideRouteRequest(rejectionRoute.id, "Rejected", trimmedReason);
       setItems((current) =>
         current.map((item) =>
-          item.id === routeId
+          item.id === rejectionRoute.id
             ? {
                 ...item,
-                status:
-                  status === "Onaylandi"
-                    ? "approved"
-                    : status === "Reddedildi"
-                      ? "rejected"
-                      : "revision_requested",
+                comments: trimmedReason,
+                decisionNote: trimmedReason,
+                rejectionReason: trimmedReason,
+                status: "Rejected",
               }
             : item,
         ),
       );
-      setMessage("Rota karari guncellendi.");
+      setRejectionRoute(null);
+      setRejectionReason("");
+      setMessage("Rota reddedildi ve red sebebi kayda gonderildi.");
     } catch (decisionError) {
       setError(
         decisionError instanceof Error
@@ -112,51 +190,29 @@ export function RouteRequestApprovalsPage({
     }
   }
 
-  async function handleAssignmentSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!assignmentRoute) return;
-
+  async function handleApprove(route: RouteRequestApproval) {
     setError(null);
     setMessage(null);
     setIsSubmitting(true);
 
     try {
-      await decideRouteRequest(assignmentRoute.id, "Onaylandi");
-      await createTrip({
-        routeId: assignmentRoute.id,
-        startTime: `${assignmentForm.serviceDate}T${assignmentForm.startTime}:00`,
-        tripDate: assignmentForm.serviceDate,
-      });
-
-      const driver = drivers.find(
-        (item) => item.userId === Number(assignmentForm.driverId),
-      );
-      const vehicle = vehicles.find(
-        (item) => item.vehicleId === Number(assignmentForm.vehicleId),
-      );
-
+      await decideRouteRequest(route.id, "Approved");
       setItems((current) =>
         current.map((item) =>
-          item.id === assignmentRoute.id
+          item.id === route.id
             ? {
                 ...item,
-                assignedDriver: driver ? `${driver.firstName} ${driver.lastName}` : "Bekliyor",
-                assignedVehicle: vehicle?.plateNumber || "Bekliyor",
-                status: "approved",
+                status: "Approved",
               }
             : item,
         ),
       );
-      setAssignmentRoute(null);
-      setMessage(
-        "Rota onaylandi, sefer olusturuldu. Arac/sofor atamasi backend atama endpointi acilinca kalici baglanacak.",
-      );
-    } catch (assignmentError) {
+      setMessage("Rota talebi onaylandi.");
+    } catch (approvalError) {
       setError(
-        assignmentError instanceof Error
-          ? assignmentError.message
-          : "Onay ve servis atama akisi tamamlanamadi.",
+        approvalError instanceof Error
+          ? approvalError.message
+          : "Rota talebi onaylanamadi.",
       );
     } finally {
       setIsSubmitting(false);
@@ -166,37 +222,34 @@ export function RouteRequestApprovalsPage({
   return (
     <>
       <PageSection
-        description="Admin gelen rota taleplerini inceler; onayda arac, sofor ve ilk sefer planini belirler."
-        eyebrow="Admin Approval"
-        title="Route Request Approvals"
+        description="ABC Turizm admini gelen rota taleplerini inceler, onaylar veya zorunlu red sebebiyle reddeder."
+        eyebrow="Admin"
+        title="Rota Onaylari"
       >
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           <MetricCard
-            hint="Rota seviyesinde gelen karar isi"
+            hint="Gelen rota"
             icon={Route}
-            label="Toplam Istek"
+            label="Toplam"
             value={items.length}
           />
           <MetricCard
-            hint="Operasyon ekibi bekliyor"
+            hint="Admin karari bekliyor"
             icon={Route}
-            label="Talep Edildi"
-            value={items.filter((approval) => approval.status?.toLowerCase() === "requested").length}
+            label="Onay Bekleyen"
+            value={items.filter((approval) => isPending(approval.status)).length}
           />
           <MetricCard
-            hint="Gercek rota olusturulabilir"
+            hint="Admin tarafindan kabul edildi"
             icon={Check}
-            label="Onayli"
-            value={items.filter((approval) => approval.status?.toLowerCase() === "approved").length}
+            label="Onaylanan"
+            value={items.filter((approval) => isApproved(approval.status)).length}
           />
           <MetricCard
-            hint="Sirket yoneticisine donecek"
-            icon={RefreshCcw}
-            label="Revizyon"
-            value={
-              items.filter((approval) => approval.status?.toLowerCase() === "revision_requested")
-                .length
-            }
+            hint="Red sebebi girildi"
+            icon={X}
+            label="Reddedilen"
+            value={items.filter((approval) => isRejected(approval.status)).length}
           />
         </div>
 
@@ -213,27 +266,24 @@ export function RouteRequestApprovalsPage({
 
         <div className="grid gap-5 2xl:grid-cols-[1fr_420px]">
           <TableShell
-            description="Baslangic, bitis, duraklar, calisan sayisi ve tahmini sure rota kararini destekler."
-            searchPlaceholder="Client, rota veya lokasyon ara..."
-            title="Rota Onay Kuyrugu"
+            description="Plan onayina gelen rotalar ve karar durumu."
+            searchPlaceholder="Musteri veya rota ara..."
+            title="Onay Kuyrugu"
           >
-            <table className="w-full min-w-[1300px] border-collapse">
+            <table className="w-full min-w-[1100px] border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70">
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                    Client / Rota
+                    Rota
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                    Baslangic
+                    Plan
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                    Bitis
+                    Kapsam
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                    Kapasite
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
-                    Tahmin
+                    Atama
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                     Durum
@@ -254,24 +304,30 @@ export function RouteRequestApprovalsPage({
                         {approval.routeName}
                       </p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {approval.clientName} / {approval.requestedBy}
+                        {approval.clientName || `Client #${approval.clientId ?? "-"}`}
                       </p>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-700">
-                      {approval.startPoint}
+                      <p>{approval.shiftType || "-"}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {approval.operatingDays || "-"} /{" "}
+                        {approval.plannedStartTime || "-"}
+                      </p>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-700">
-                      {approval.endPoint}
+                      <p>{formatRouteScope(approval)}</p>
+                      <p className="mt-1 max-w-[340px] truncate text-xs text-slate-500">
+                        {formatStopPreview(approval)}
+                      </p>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-700">
-                      {approval.stopCount} durak / {approval.employeeCount} calisan
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-700">
-                      {approval.estimatedDistanceKm || 0} km /{" "}
-                      {approval.estimatedDurationMinutes || 0} dk
+                      <p>{approval.assignedVehicle ?? "Arac bekliyor"}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {approval.assignedDriver ?? "Sofor bekliyor"}
+                      </p>
                     </td>
                     <td className="px-5 py-4">
-                      <StatusBadge status={approval.status?.toLowerCase() || "requested"} />
+                      <StatusBadge status={approval.status || "Requested"} />
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
@@ -284,7 +340,7 @@ export function RouteRequestApprovalsPage({
                         </Button>
                         <Button
                           disabled={isSubmitting}
-                          onClick={() => openAssignment(approval)}
+                          onClick={() => handleApprove(approval)}
                           size="icon"
                           variant="success"
                         >
@@ -292,17 +348,7 @@ export function RouteRequestApprovalsPage({
                         </Button>
                         <Button
                           disabled={isSubmitting}
-                          onClick={() =>
-                            updateDecision(approval.id, "Revizyon Istendi")
-                          }
-                          size="icon"
-                          variant="secondary"
-                        >
-                          <RefreshCcw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          disabled={isSubmitting}
-                          onClick={() => updateDecision(approval.id, "Reddedildi")}
+                          onClick={() => openRejection(approval)}
                           size="icon"
                           variant="danger"
                         >
@@ -321,52 +367,92 @@ export function RouteRequestApprovalsPage({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase text-teal-700">
-                    Detay Goruntule
+                    Detay
                   </p>
                   <h2 className="mt-2 font-semibold text-slate-950">
                     {selected.routeName}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {selected.clientName}
+                    {selected.clientName || `Client #${selected.clientId ?? "-"}`}
                   </p>
                 </div>
-                <StatusBadge status={selected.status?.toLowerCase() || "requested"} />
+                <StatusBadge status={selected.status || "Requested"} />
               </div>
+
               <div className="mt-5 space-y-4">
                 <div className="rounded-2xl border border-slate-200 p-4">
                   <p className="text-xs font-semibold uppercase text-slate-500">
-                    Operasyon Tahmini
+                    Kapsam
                   </p>
                   <p className="mt-2 text-sm text-slate-700">
-                    {selected.estimatedDistanceKm || 0} km,{" "}
-                    {selected.estimatedDurationMinutes || 0} dk, {selected.stopCount || 0} durak
+                    {formatRouteScope(selected)}
                   </p>
                 </div>
+
                 <div className="rounded-2xl border border-slate-200 p-4">
                   <p className="text-xs font-semibold uppercase text-slate-500">
-                    Arac Onerisi
+                    Duraklar
                   </p>
-                  <p className="mt-2 text-sm text-slate-700">
-                    {selected.vehicleSuggestion}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">
-                    Atama
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="neutral">
-                      Arac: {selected.assignedVehicle ?? "Bekliyor"}
-                    </Badge>
-                    <Badge variant="neutral">
-                      Sofor: {selected.assignedDriver ?? "Bekliyor"}
-                    </Badge>
+                  <div className="mt-3 space-y-2">
+                    {getOrderedStops(selected).length ? (
+                      getOrderedStops(selected).map((stop) => (
+                        <div
+                          className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                          key={stop.stopId}
+                        >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
+                            {stop.sequence}
+                          </span>
+                          <span className="min-w-0 truncate font-medium">
+                            {stop.stopName}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Bu rota icin durak detayi gelmedi.
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <p className="text-xs font-semibold uppercase text-slate-500">
+                    Calisanlar
+                  </p>
+                  <div className="mt-3 flex max-h-36 flex-wrap gap-2 overflow-y-auto">
+                    {getRoutePassengers(selected).length ? (
+                      getRoutePassengers(selected).map((passenger) => (
+                        <span
+                          className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
+                          key={passenger.passengerId}
+                        >
+                          {passenger.passengerName}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Bu rota icin calisan detayi gelmedi.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {isRejected(selected.status) && getDecisionReason(selected) ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+                    <p className="text-xs font-semibold uppercase text-red-600">
+                      Red sebebi
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-red-700">
+                      {getDecisionReason(selected)}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     disabled={isSubmitting}
-                    onClick={() => openAssignment(selected)}
+                    onClick={() => handleApprove(selected)}
                     size="sm"
                     variant="success"
                   >
@@ -374,15 +460,7 @@ export function RouteRequestApprovalsPage({
                   </Button>
                   <Button
                     disabled={isSubmitting}
-                    onClick={() => updateDecision(selected.id, "Revizyon Istendi")}
-                    size="sm"
-                    variant="secondary"
-                  >
-                    Revizyon
-                  </Button>
-                  <Button
-                    disabled={isSubmitting}
-                    onClick={() => updateDecision(selected.id, "Reddedildi")}
+                    onClick={() => openRejection(selected)}
                     size="sm"
                     variant="danger"
                   >
@@ -396,92 +474,53 @@ export function RouteRequestApprovalsPage({
       </PageSection>
 
       <Modal
-        description="Onay sonrasi bu rota icin arac, sofor ve ilk sefer bilgisi belirlenir."
-        isOpen={Boolean(assignmentRoute)}
-        onClose={() => setAssignmentRoute(null)}
-        title="Servis ve Sofor Ata"
+        description="Reddedilen rota servis yoneticisine bu gerekceyle geri gosterilir."
+        isOpen={Boolean(rejectionRoute)}
+        onClose={() => {
+          setRejectionRoute(null);
+          setRejectionError(null);
+        }}
+        title="Rota Talebini Reddet"
       >
-        <form onSubmit={handleAssignmentSubmit}>
-          <div className="grid gap-5 px-6 py-5 md:grid-cols-2">
+        <form onSubmit={handleRejectSubmit}>
+          <div className="px-6 py-5">
             <label className="block">
               <span className="text-sm font-semibold text-slate-800">
-                Arac
+                Red sebebi <span className="text-red-500">*</span>
               </span>
-              <select
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
-                onChange={(event) =>
-                  updateAssignmentField("vehicleId", event.target.value)
-                }
-                required
-                value={assignmentForm.vehicleId}
-              >
-                <option value="">Arac secin</option>
-                {vehicles.map((vehicle) => (
-                  <option key={vehicle.vehicleId} value={vehicle.vehicleId}>
-                    {vehicle.plateNumber} / {vehicle.capacity} koltuk
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-800">
-                Sofor
-              </span>
-              <select
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
-                onChange={(event) =>
-                  updateAssignmentField("driverId", event.target.value)
-                }
-                required
-                value={assignmentForm.driverId}
-              >
-                <option value="">Sofor secin</option>
-                {drivers.map((driver) => (
-                  <option key={driver.userId} value={driver.userId}>
-                    {driver.firstName} {driver.lastName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-800">
-                Sefer tarihi
-              </span>
-              <input
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
-                onChange={(event) =>
-                  updateAssignmentField("serviceDate", event.target.value)
-                }
-                required
-                type="date"
-                value={assignmentForm.serviceDate}
+              <textarea
+                className="mt-2 min-h-32 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                onChange={(event) => {
+                  setRejectionReason(event.target.value);
+                  setRejectionError(null);
+                }}
+                placeholder="Ornegin: Durak sirasi operasyon planina uygun degil."
+                value={rejectionReason}
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-800">
-                Baslangic saati
-              </span>
-              <input
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
-                onChange={(event) =>
-                  updateAssignmentField("startTime", event.target.value)
-                }
-                required
-                type="time"
-                value={assignmentForm.startTime}
-              />
-            </label>
+            {rejectionError ? (
+              <p className="mt-2 text-sm font-semibold text-red-600">
+                {rejectionError}
+              </p>
+            ) : null}
           </div>
           <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-            <Button onClick={() => setAssignmentRoute(null)} variant="secondary">
+            <Button
+              onClick={() => {
+                setRejectionRoute(null);
+                setRejectionError(null);
+              }}
+              variant="secondary"
+            >
               Vazgec
             </Button>
-            <Button disabled={isSubmitting} type="submit">
-              {isSubmitting ? "Kaydediliyor..." : "Onayla ve Sefer Olustur"}
+            <Button disabled={isSubmitting} type="submit" variant="danger">
+              {isSubmitting ? "Gonderiliyor..." : "Reddet"}
             </Button>
           </div>
         </form>
       </Modal>
+
     </>
   );
 }
