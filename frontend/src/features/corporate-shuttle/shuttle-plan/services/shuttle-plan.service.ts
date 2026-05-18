@@ -1,4 +1,4 @@
-import { getRequest, postRequest } from "@/lib/api";
+import { getRequest } from "@/lib/api";
 
 import { shuttlePlanMockData } from "../constants";
 import type { CorporateEmployee } from "../../employees/types";
@@ -51,15 +51,6 @@ export async function getCorporateShuttlePlan(
   }
 }
 
-export async function submitCorporateShuttlePlan(clientId: number) {
-  assertClientId(clientId);
-
-  return postRequest<{ message?: string }>(
-    `/api/corporate-shuttle/clients/${clientId}/shuttle-plan/submit`,
-    {},
-  );
-}
-
 function buildPlanSummary(
   clientId: number,
   employees: CorporateEmployee[],
@@ -73,7 +64,7 @@ function buildPlanSummary(
     stopCount: stops.length,
     routeRequestCount: routes.length,
     status: routes.some((route) =>
-      ["plan sent", "submitted"].includes(
+      ["plan sent", "submitted", "requested"].includes(
         String(route.status ?? "").trim().toLocaleLowerCase("tr-TR"),
       ),
     )

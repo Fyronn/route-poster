@@ -2,12 +2,31 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bus, LogOut } from "lucide-react";
+import {
+  Bus,
+  Building2,
+  CheckSquare,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Route,
+  Users,
+} from "lucide-react";
 
-import { adminSidebarItems } from "@/config/admin-sidebar";
+import type { AdminSidebarItem, SidebarIcon } from "@/config/admin-sidebar";
 import { getAppAccessRole } from "@/features/auth/role-access";
 import type { AuthUser } from "@/features/auth/types";
 import { clearAuthSession } from "@/lib/auth-client";
+
+const sidebarIcons: Record<SidebarIcon, typeof LayoutDashboard> = {
+  bus: Bus,
+  building: Building2,
+  "check-square": CheckSquare,
+  dashboard: LayoutDashboard,
+  "map-pin": MapPin,
+  route: Route,
+  users: Users,
+};
 
 function getInitials(user: AuthUser) {
   const first = user.firstName?.[0] ?? "";
@@ -15,15 +34,16 @@ function getInitials(user: AuthUser) {
   return `${first}${last}`.toUpperCase() || "U";
 }
 
-export function AdminSidebar({ authUser }: { authUser: AuthUser }) {
+export function AdminSidebar({
+  authUser,
+  sidebarItems,
+}: {
+  authUser: AuthUser;
+  sidebarItems: AdminSidebarItem[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const currentRole = getAppAccessRole(authUser);
-  const sidebarItems = adminSidebarItems.filter(
-    (item) =>
-      currentRole !== "unknown" &&
-      (item.roles.includes("all") || item.roles.includes(currentRole)),
-  );
 
   function handleLogout() {
     clearAuthSession();
@@ -46,7 +66,7 @@ export function AdminSidebar({ authUser }: { authUser: AuthUser }) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {sidebarItems.map((item) => {
-          const Icon = item.icon;
+          const Icon = sidebarIcons[item.icon];
 
           const isActive =
             item.href === "/admin"

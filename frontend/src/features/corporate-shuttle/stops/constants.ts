@@ -32,7 +32,7 @@ export const corporateStopsMockData: CorporateStopRequest[] = [
     district: "Bahçelievler",
     stopType: "both",
     employeeCount: 31,
-    status: "revision_requested",
+    status: "rejected",
     operatorNote: "Durak noktası yoğun trafik nedeniyle 120m taşınmalı.",
     isActive: true,
   },

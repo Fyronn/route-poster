@@ -1,65 +1,67 @@
-import {
-  Bus,
-  Building2,
-  Calendar,
-  CheckSquare,
-  ClipboardList,
-  LayoutDashboard,
-  MapPin,
-  Route,
-  Send,
-  Users,
-} from "lucide-react";
-
 export type SidebarRole = "admin" | "service-manager" | "all";
+export type SidebarIcon =
+  | "bus"
+  | "building"
+  | "dashboard"
+  | "map-pin"
+  | "route"
+  | "users"
+  | "check-square";
 
-export const adminSidebarItems = [
+export type AdminSidebarItem = {
+  href: string;
+  icon: SidebarIcon;
+  label: string;
+  roles: SidebarRole[];
+};
+
+export const adminSidebarItems: AdminSidebarItem[] = [
   {
-    label: "Dashboard",
+    label: "Panel",
     href: "/admin",
-    icon: LayoutDashboard,
+    icon: "dashboard",
     roles: ["all"],
   },
   {
-    label: "Clients",
+    label: "Musteriler",
     href: "/admin/clients",
-    icon: Building2,
+    icon: "building",
     roles: ["admin"],
   },
   {
-    label: "Drivers",
+    label: "Suruculer",
     href: "/admin/drivers",
-    icon: Users,
+    icon: "users",
     roles: ["admin"],
   },
   {
-    label: "Vehicles",
+    label: "Araclar",
     href: "/admin/vehicles",
-    icon: Bus,
+    icon: "bus",
     roles: ["admin"],
   },
   {
-    label: "Employees",
+    label: "Calisanlar",
     href: "/admin/corporate-shuttle/employees",
-    icon: Users,
+    icon: "users",
     roles: ["service-manager"],
   },
   {
-    label: "Stops",
+    label: "Duraklar",
     href: "/admin/corporate-shuttle/stops",
-    icon: MapPin,
+    icon: "map-pin",
     roles: ["service-manager"],
   },
   {
-    label: "Route Requests",
+    label: "Rota Talepleri",
     href: "/admin/corporate-shuttle/route-requests",
-    icon: Route,
+    icon: "route",
     roles: ["service-manager"],
   },
   {
-    label: "Route Approvals",
+    label: "Rota Onaylari",
     href: "/admin/route-request-approvals",
-    icon: CheckSquare,
+    icon: "check-square",
     roles: ["admin"],
   }
 ];
