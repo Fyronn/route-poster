@@ -21,7 +21,7 @@ public class PassengerPreferenceDto
 public class CreateTemporaryPreferenceDto
 {
     public int RouteId { get; set; }
-    public int PickupStopId { get; set; }
+    public int? PickupStopId { get; set; }
     public int? DropoffStopId { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }

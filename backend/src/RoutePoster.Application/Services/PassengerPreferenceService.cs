@@ -167,12 +167,37 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
     public async Task AddTemporaryPreferenceAsync(int passengerId, CreateTemporaryPreferenceDto dto)
     {
+        int pickupStopId = dto.PickupStopId ?? 0;
+        int? dropoffStopId = dto.DropoffStopId;
+
+        // If either pickup or dropoff stop is not provided, try to fallback to the default preference
+        if (dto.PickupStopId == null || dto.DropoffStopId == null)
+        {
+            var defaultPref = await _preferenceRepo.GetDefaultWithDetailsAsync(passengerId);
+            if (defaultPref != null)
+            {
+                if (dto.PickupStopId == null)
+                {
+                    pickupStopId = defaultPref.PickupStopId;
+                }
+                if (dto.DropoffStopId == null)
+                {
+                    dropoffStopId = defaultPref.DropoffStopId;
+                }
+            }
+        }
+
+        if (pickupStopId == 0)
+        {
+            throw new System.ArgumentException("A pickup stop must be provided either as a parameter or exist as a default preference.");
+        }
+
         var entity = new TblpassengerTemporaryPreference
         {
             PassengerId = passengerId,
             RouteId = dto.RouteId,
-            PickupStopId = dto.PickupStopId,
-            DropoffStopId = dto.DropoffStopId,
+            PickupStopId = pickupStopId,
+            DropoffStopId = dropoffStopId,
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
             Description = dto.Description,

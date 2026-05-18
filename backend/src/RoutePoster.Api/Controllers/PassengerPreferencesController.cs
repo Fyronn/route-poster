@@ -56,8 +56,9 @@ public class PassengerPreferencesController : ControllerBase
     }
 
     [HttpPost("absences")]
-    public async Task<IActionResult> AddAbsence([FromBody] CreateAbsenceDto dto)
+    public async Task<IActionResult> AddAbsence(int passengerId, [FromBody] CreateAbsenceDto dto)
     {
+        dto.PassengerId = passengerId;
         await _preferenceService.AddAbsenceRangeAsync(dto);
         return Ok(new { Message = "Absence record(s) added successfully." });
     }
