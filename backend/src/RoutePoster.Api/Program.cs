@@ -59,6 +59,8 @@ builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IVehicleRepository, Rou
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerPreferenceRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerTemporaryPreferenceRepository, RoutePoster.Infrastructure.Repositories.PassengerTemporaryPreferenceRepository>();
 builder.Services.AddScoped<RoutePoster.Domain.Interfaces.IPassengerAbsenceRepository, RoutePoster.Infrastructure.Repositories.PassengerAbsenceRepository>();
+builder.Services.AddScoped<RoutePoster.Domain.Interfaces.ITripAssignmentRepository, RoutePoster.Infrastructure.Repositories.TripAssignmentRepository>();
+builder.Services.AddScoped<RoutePoster.Domain.Interfaces.ITripAttendanceRepository, RoutePoster.Infrastructure.Repositories.TripAttendanceRepository>();
 
 // Services
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IClientService, RoutePoster.Application.Services.ClientService>();
@@ -70,6 +72,8 @@ builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IVehicleS
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IDriverService, RoutePoster.Application.Services.DriverService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IAuthService, RoutePoster.Application.Services.AuthService>();
 builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.IPassengerPreferenceService, RoutePoster.Application.Services.PassengerPreferenceService>();
+builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.ITripAssignmentService, RoutePoster.Application.Services.TripAssignmentService>();
+builder.Services.AddScoped<RoutePoster.Application.Services.Interfaces.ITripAttendanceService, RoutePoster.Application.Services.TripAttendanceService>();
 
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
