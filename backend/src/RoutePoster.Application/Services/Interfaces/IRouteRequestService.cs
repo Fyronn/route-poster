@@ -12,5 +12,6 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<RouteRequestDto?> GetByIdAsync(int id);
         Task<RouteRequestDto> CreateAsync(CreateRouteRequestDto dto);
         Task UpdateStatusAsync(int id, string status);
+        Task<IEnumerable<RouteStopDto>?> GetRouteStopsAsync(int routeId);
     }
 }

@@ -38,9 +38,22 @@ namespace RoutePoster.Application.Services
 
         public async Task<RouteRequestDto?> GetByIdAsync(int id)
         {
-            var entity = await _routeRequestRepository.GetByIdAsync(id);
+            var entity = await _routeRequestRepository.GetByIdWithDetailsAsync(id);
             if (entity == null) return null;
             return MapToDto(entity);
+        }
+
+        public async Task<IEnumerable<RouteStopDto>?> GetRouteStopsAsync(int routeId)
+        {
+            var entity = await _routeRequestRepository.GetByIdWithDetailsAsync(routeId);
+            if (entity == null) return null;
+
+            return entity.TblrouteStops.Select(s => new RouteStopDto
+            {
+                StopId = s.StopId,
+                StopName = s.Stop?.StopName ?? "Unknown",
+                StopOrder = s.StopOrder
+            }).OrderBy(s => s.StopOrder).ToList();
         }
 
         public async Task<RouteRequestDto> CreateAsync(CreateRouteRequestDto dto)
