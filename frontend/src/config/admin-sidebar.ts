@@ -41,6 +41,12 @@ export const adminSidebarItems: AdminSidebarItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Seferler",
+    href: "/admin/trips",
+    icon: "route",
+    roles: ["admin"],
+  },
+  {
     label: "Calisanlar",
     href: "/admin/corporate-shuttle/employees",
     icon: "users",

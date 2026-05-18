@@ -1,20 +1,38 @@
 export type Trip = {
   tripId: number;
-  tripName?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  origin?: string | null;
-  destination?: string | null;
-  status?: string | null;
-  vehicleId?: number | null;
-  driverId?: number | null;
   routeId?: number | null;
-  isActive?: boolean | null;
+  tripDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  status?: string | null;
+};
 
-  // Optional fields for UI / mock consistency
-  routeName?: string;
-  vehicle?: string;
-  driver?: string;
-  date?: string;
-  time?: string;
+export type TripAssignment = {
+  id: number;
+  tripId: number;
+  vehicleId: number;
+  driverId: number;
+  tripDate?: string | null;
+  vehiclePlateNumber?: string | null;
+  driverFirstName?: string | null;
+  driverLastName?: string | null;
+  serviceSupervisorId?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  createdBy?: number | null;
+};
+
+export type CreateTripDto = {
+  routeId: number;
+  tripDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+};
+
+export type CreateTripAssignmentDto = {
+  tripId: number;
+  vehicleId: number;
+  driverId: number;
+  serviceSupervisorId?: number | null;
+  createdBy?: number | null;
 };
