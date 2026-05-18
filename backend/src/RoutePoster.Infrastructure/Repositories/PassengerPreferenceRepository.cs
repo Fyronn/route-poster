@@ -52,6 +52,11 @@ public class PassengerAbsenceRepository : GenericRepository<TblpassengerAbsence>
         return await _dbSet.Where(p => p.PassengerId == passengerId).ToListAsync();
     }
 
+    public async Task<IEnumerable<TblpassengerAbsence>> GetWithDetailsByPassengerIdAsync(int passengerId)
+    {
+        return await _dbSet.Include(p => p.Route).Where(p => p.PassengerId == passengerId).ToListAsync();
+    }
+
     public async Task<bool> IsAbsentAsync(int passengerId, DateOnly date)
     {
         return await _dbSet.AnyAsync(p => p.PassengerId == passengerId && p.AbsenceDate == date);
