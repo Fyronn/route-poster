@@ -143,6 +143,11 @@ export async function registerUser(payload: RegisterUserPayload) {
       password: payload.password,
       roleId: payload.roleId,
       clientId: payload.clientId,
+      transportCompanyId:payload.transportCompanyId,
+      departmentId:payload.departmentId,
+      identityNumber:payload.identityNumber,
+      phone:payload.phone
+
     },
     { skipAuth: true },
   );
