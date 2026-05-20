@@ -45,8 +45,8 @@ export async function decideRouteRequest(
   return putRequest<{ message?: string }>(
     `/api/shuttle-plan-requests/route/${routeId}/status`,
     {
-      comments: rejectionReason,
-      rejectionReason,
+      
+      rejectedReason:rejectionReason,
       status,
     },
   );
