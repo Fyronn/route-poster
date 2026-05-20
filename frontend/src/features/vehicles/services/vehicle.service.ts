@@ -1,7 +1,7 @@
-import { getRequest, postRequest } from "@/lib/api";
+import { deleteRequest, getRequest, postRequest, putRequest } from "@/lib/api";
 
 import { vehiclesMockData } from "../constants";
-import type { Vehicle } from "../types";
+import type { Vehicle, VehicleUpdateDto } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
@@ -39,4 +39,34 @@ export async function createVehicle(payload: {
   return vehicle;
 }
 
+export async function updateVehicle(vehicleId: number, data: VehicleUpdateDto) {
+
+  try {
+
+    const updateReq = await putRequest<Vehicle>(`/api/vehicles/${vehicleId}`, data);
+    if (typeof updateReq === undefined) {
+      console.log(`Arac güncelleme işlemi gövde olmadan döndü`)
+    }
+
+
+  } catch (e) {
+    console.log(`Arac güncellemesinde hata ${e}`)
+  }
+
+
+
+}
+
+export async function deleteVehicle(vehicleId: number) {
+  try {
+    const deleteReq = await deleteRequest<Vehicle>(`/api/vehicles/${vehicleId}`)
+
+  } catch (e) {
+    console.log(e)
+
+  }
+
+
+
+}
 
