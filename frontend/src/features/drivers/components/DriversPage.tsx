@@ -24,6 +24,7 @@ type DriverFormState = {
   lastName: string;
   phone: string;
   isActive: boolean;
+  password:string
 };
 
 const emptyForm: DriverFormState = {
@@ -32,6 +33,7 @@ const emptyForm: DriverFormState = {
   identityNumber: "",
   lastName: "",
   phone: "",
+  password:"",
   isActive: true,
 };
 
@@ -127,6 +129,7 @@ export function DriversPage({ drivers }: { drivers: Driver[] }) {
       phone: driver.phone ?? "",
       identityNumber: driver.identityNumber ?? "",
       isActive: driver.isActive ?? true,
+      password:""
     });
 
     setError(null);
@@ -374,6 +377,13 @@ export function DriversPage({ drivers }: { drivers: Driver[] }) {
               placeholder="mehmet@abcturizm.com"
               type="email"
               value={form.email}
+            />
+
+            <Field
+              label="Şifre"
+              onChange={(value) => updateField("password", value)}
+              placeholder="*****"
+              value={form.password}
             />
 
             <Field
