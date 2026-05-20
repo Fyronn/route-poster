@@ -15,11 +15,16 @@ namespace RoutePoster.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly IGenericRepository<Tbluser> _userRepository;
+    private readonly IGenericRepository<Tblrole> _roleRepository;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IGenericRepository<Tbluser> userRepository, IConfiguration configuration)
+    public AuthService(
+        IGenericRepository<Tbluser> userRepository,
+        IGenericRepository<Tblrole> roleRepository,
+        IConfiguration configuration)
     {
         _userRepository = userRepository;
+        _roleRepository = roleRepository;
         _configuration = configuration;
     }
 
@@ -33,7 +38,7 @@ public class AuthService : IAuthService
             return null;
         }
 
-        return CreateAuthResponse(user);
+        return await CreateAuthResponseAsync(user);
     }
 
     public async Task<AuthResponseDto?> RegisterAsync(RegisterRequestDto registerDto)
@@ -52,6 +57,10 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
             RoleId = registerDto.RoleId ?? 0,
             ClientId = registerDto.ClientId,
+            TransportCompanyId = registerDto.TransportCompanyId,
+            DepartmentId = registerDto.DepartmentId,
+            IdentityNumber = registerDto.IdentityNumber,
+            Phone = registerDto.Phone,
             IsActive = true,
             CreatedAt = DateTime.Now
         };
@@ -59,7 +68,7 @@ public class AuthService : IAuthService
         await _userRepository.AddAsync(user);
         await _userRepository.SaveChangesAsync();
 
-        return CreateAuthResponse(user, registerDto.RoleId, registerDto.ClientId);
+        return await CreateAuthResponseAsync(user, registerDto.RoleId, registerDto.ClientId);
     }
 
     public async Task<bool> ChangePasswordAsync(ChangePasswordRequestDto changePasswordDto)
@@ -85,13 +94,22 @@ public class AuthService : IAuthService
     }
 
 
-    private AuthResponseDto CreateAuthResponse(
+    private async Task<AuthResponseDto> CreateAuthResponseAsync(
         Tbluser user,
         int? fallbackRoleId = null,
         int? fallbackClientId = null)
     {
         var roleId = user.RoleId != 0 ? user.RoleId : (fallbackRoleId ?? 0);
         var clientId = user.ClientId ?? fallbackClientId;
+
+        // Fetch role dynamically from repository to guarantee it exists and prevents null RoleName
+        var roles = await _roleRepository.FindAsync(r => r.Id == roleId);
+        var role = roles.FirstOrDefault();
+        if (role != null)
+        {
+            user.Role = role;
+        }
+
         var token = GenerateJwtToken(user, roleId, clientId);
 
         return new AuthResponseDto
@@ -105,7 +123,7 @@ public class AuthService : IAuthService
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email ?? "",
-                RoleName = user.Role?.RoleName ?? ResolveRoleName(roleId)
+                RoleName = role?.RoleName ?? user.Role?.RoleName ?? ResolveRoleName(roleId)
             }
         };
     }
