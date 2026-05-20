@@ -48,8 +48,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             RouteId = p.RouteId,
             RouteName = p.Route.RouteName,
             PickupStopId = p.PickupStopId,
-            PickupStopName = p.PickupStop.StopName,
-            PickupStopAddress = p.PickupStop.Address,
+            PickupStopName = p.PickupStop?.StopName,
+            PickupStopAddress = p.PickupStop?.Address,
             DropoffStopId = p.DropoffStopId,
             DropoffStopName = p.DropoffStop?.StopName,
             DropoffStopAddress = p.DropoffStop?.Address,
@@ -70,8 +70,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteId = temp.RouteId,
                 RouteName = temp.Route.RouteName,
                 PickupStopId = temp.PickupStopId,
-                PickupStopName = temp.PickupStop.StopName,
-                PickupStopAddress = temp.PickupStop.Address,
+                PickupStopName = temp.PickupStop?.StopName,
+                PickupStopAddress = temp.PickupStop?.Address,
                 DropoffStopId = temp.DropoffStopId,
                 DropoffStopName = temp.DropoffStop?.StopName,
                 DropoffStopAddress = temp.DropoffStop?.Address,
@@ -90,8 +90,8 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 RouteId = def.RouteId,
                 RouteName = def.Route.RouteName,
                 PickupStopId = def.PickupStopId,
-                PickupStopName = def.PickupStop.StopName,
-                PickupStopAddress = def.PickupStop.Address,
+                PickupStopName = def.PickupStop?.StopName,
+                PickupStopAddress = def.PickupStop?.Address,
                 DropoffStopId = def.DropoffStopId,
                 DropoffStopName = def.DropoffStop?.StopName,
                 DropoffStopAddress = def.DropoffStop?.Address,
@@ -99,6 +99,28 @@ public class PassengerPreferenceService : IPassengerPreferenceService
             };
         }
 
+        return null;
+    }
+
+    public async Task<PassengerPreferenceDto?> GetDefaultPreferenceAsync(int passengerId, int routeId)
+    {
+        var def = await _preferenceRepo.GetDefaultWithDetailsByRouteAsync(passengerId, routeId);
+        if (def != null)
+        {
+            return new PassengerPreferenceDto
+            {
+                Id = def.Id,
+                RouteId = def.RouteId,
+                RouteName = def.Route.RouteName,
+                PickupStopId = def.PickupStopId,
+                PickupStopName = def.PickupStop?.StopName,
+                PickupStopAddress = def.PickupStop?.Address,
+                DropoffStopId = def.DropoffStopId,
+                DropoffStopName = def.DropoffStop?.StopName,
+                DropoffStopAddress = def.DropoffStop?.Address,
+                IsTemporary = false
+            };
+        }
         return null;
     }
 
@@ -136,7 +158,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
         await _absenceRepo.SaveChangesAsync();
     }
 
-    public async Task SetDefaultPreferenceAsync(int passengerId, int routeId, int pickupStopId, int? dropoffStopId)
+    public async Task SetDefaultPreferenceAsync(int passengerId, int routeId, int? pickupStopId, int? dropoffStopId)
     {
         var existingList = await _preferenceRepo.FindAsync(p => p.PassengerId == passengerId && p.RouteId == routeId);
         var existing = existingList.FirstOrDefault();
@@ -167,7 +189,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
     public async Task AddTemporaryPreferenceAsync(int passengerId, CreateTemporaryPreferenceDto dto)
     {
-        int pickupStopId = dto.PickupStopId ?? 0;
+        int? pickupStopId = dto.PickupStopId;
         int? dropoffStopId = dto.DropoffStopId;
 
         // If either pickup or dropoff stop is not provided, try to fallback to the default preference
@@ -185,11 +207,6 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                     dropoffStopId = defaultPref.DropoffStopId;
                 }
             }
-        }
-
-        if (pickupStopId == 0)
-        {
-            throw new System.ArgumentException("A pickup stop must be provided either as a parameter or exist as a default preference.");
         }
 
         var entity = new TblpassengerTemporaryPreference

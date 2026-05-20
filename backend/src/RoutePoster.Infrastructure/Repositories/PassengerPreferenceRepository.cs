@@ -23,6 +23,12 @@ public class PassengerPreferenceRepository : GenericRepository<TblpassengerRoute
         return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
             .FirstOrDefaultAsync(p => p.PassengerId == passengerId && (p.IsDefault ?? false));
     }
+
+    public async Task<TblpassengerRoutePreference?> GetDefaultWithDetailsByRouteAsync(int passengerId, int routeId)
+    {
+        return await _dbSet.Include(p => p.Route).Include(p => p.PickupStop).Include(p => p.DropoffStop)
+            .FirstOrDefaultAsync(p => p.PassengerId == passengerId && p.RouteId == routeId && (p.IsDefault ?? false));
+    }
 }
 
 public class PassengerTemporaryPreferenceRepository : GenericRepository<TblpassengerTemporaryPreference>, IPassengerTemporaryPreferenceRepository

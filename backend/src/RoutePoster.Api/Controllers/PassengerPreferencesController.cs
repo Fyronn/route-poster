@@ -63,10 +63,20 @@ public class PassengerPreferencesController : ControllerBase
         return Ok(new { Message = "Absence record(s) added successfully." });
     }
 
-    [HttpPost("default")]
-    public async Task<IActionResult> SetDefaultPreference(int passengerId, [FromQuery] int routeId, [FromQuery] int pickupStopId, [FromQuery] int? dropoffStopId)
+    [HttpGet("default")]
+    public async Task<IActionResult> GetDefaultPreference(int passengerId, [FromQuery] int routeId)
     {
-        await _preferenceService.SetDefaultPreferenceAsync(passengerId, routeId, pickupStopId, dropoffStopId);
+        var preference = await _preferenceService.GetDefaultPreferenceAsync(passengerId, routeId);
+        if (preference == null)
+            return NotFound(new { Message = "Default preference not found for this route." });
+
+        return Ok(preference);
+    }
+
+    [HttpPost("default")]
+    public async Task<IActionResult> SetDefaultPreference(int passengerId, [FromBody] SetDefaultPreferenceDto dto)
+    {
+        await _preferenceService.SetDefaultPreferenceAsync(passengerId, dto.RouteId, dto.PickupStopId, dto.DropoffStopId);
         return Ok(new { Message = "Default preference updated successfully." });
     }
 
