@@ -29,5 +29,17 @@ namespace RoutePoster.Infrastructure.Repositories
                 .Include(x => x.Driver)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
+
+        public async Task<IEnumerable<TbltripAssignment>> GetPlannedAssignmentsByDriverIdAsync(int driverId)
+        {
+            return await _dbSet
+                .Include(ta => ta.Vehicle)
+                .Include(ta => ta.Trip)
+                    .ThenInclude(t => t.Route)
+                        .ThenInclude(r => r.TblrouteStops)
+                            .ThenInclude(rs => rs.Stop)
+                .Where(ta => ta.DriverId == driverId && ta.Trip.Status == "Planned")
+                .ToListAsync();
+        }
     }
 }

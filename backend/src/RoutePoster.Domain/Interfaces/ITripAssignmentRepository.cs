@@ -8,5 +8,6 @@ namespace RoutePoster.Domain.Interfaces
     {
         Task<IEnumerable<TbltripAssignment>> GetAllWithDetailsAsync();
         Task<TbltripAssignment?> GetByIdWithDetailsAsync(int id);
+        Task<IEnumerable<TbltripAssignment>> GetPlannedAssignmentsByDriverIdAsync(int driverId);
     }
 }

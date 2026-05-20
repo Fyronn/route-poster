@@ -12,11 +12,13 @@ namespace RoutePoster.Application.Services
     public class DriverService : IDriverService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly ITripAssignmentRepository _tripAssignmentRepository;
         private const int DriverRoleId = 5;
 
-        public DriverService(IEmployeeRepository employeeRepository)
+        public DriverService(IEmployeeRepository employeeRepository, ITripAssignmentRepository tripAssignmentRepository)
         {
             _employeeRepository = employeeRepository;
+            _tripAssignmentRepository = tripAssignmentRepository;
         }
 
         public async Task<IEnumerable<DriverDto>> GetAllAsync()
@@ -92,6 +94,49 @@ namespace RoutePoster.Application.Services
                 Phone = entity.Phone,
                 IsActive = entity.IsActive
             };
+        }
+
+        public async Task<IEnumerable<DriverPlannedTripDto>> GetPlannedTripsForDriverAsync(int driverId)
+        {
+            var assignments = await _tripAssignmentRepository.GetPlannedAssignmentsByDriverIdAsync(driverId);
+            
+            var result = new List<DriverPlannedTripDto>();
+            foreach (var assignment in assignments)
+            {
+                var trip = assignment.Trip;
+                if (trip == null) continue;
+
+                var route = trip.Route;
+                if (route == null) continue;
+
+                var tripDto = new DriverPlannedTripDto
+                {
+                    TripId = trip.Id,
+                    TripDate = trip.TripDate,
+                    Status = trip.Status,
+                    VehicleId = assignment.VehicleId,
+                    VehiclePlateNumber = assignment.Vehicle?.PlateNumber,
+                    RouteId = route.Id,
+                    RouteName = route.RouteName,
+                    PlannedStartTime = route.PlannedStartTime,
+                    Stops = route.TblrouteStops
+                        .Select(rs => new DriverPlannedTripStopDto
+                        {
+                            StopId = rs.StopId,
+                            StopName = rs.Stop?.StopName ?? "Bilinmeyen Durak",
+                            StopOrder = rs.StopOrder,
+                            TargetArrivalTime = rs.TargetArrivalTime,
+                            Latitude = rs.Stop?.Latitude,
+                            Longitude = rs.Stop?.Longitude
+                        })
+                        .OrderBy(s => s.StopOrder)
+                        .ToList()
+                };
+
+                result.Add(tripDto);
+            }
+
+            return result;
         }
     }
 }

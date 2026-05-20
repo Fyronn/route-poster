@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests;
 
 namespace RoutePoster.Application.DTOs.CorporateShuttle.Preferences;
 
@@ -16,6 +18,7 @@ public class PassengerPreferenceDto
     public bool IsTemporary { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
+    public List<RouteStopDto> Stops { get; set; } = new();
 }
 
 public class SetDefaultPreferenceDto
@@ -49,6 +52,7 @@ public class DailyStatusDto
     public bool IsAbsent { get; set; }
     public string? AbsenceReason { get; set; }
     public PassengerPreferenceDto? Preference { get; set; }
+    public List<PassengerPreferenceDto> Preferences { get; set; } = new();
 }
 
 public class PassengerAbsenceDto
