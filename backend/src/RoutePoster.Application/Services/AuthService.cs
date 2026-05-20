@@ -62,6 +62,29 @@ public class AuthService : IAuthService
         return CreateAuthResponse(user, registerDto.RoleId, registerDto.ClientId);
     }
 
+    public async Task<bool> ChangePasswordAsync(ChangePasswordRequestDto changePasswordDto)
+    {
+        var user = await _userRepository.GetByIdAsync(changePasswordDto.UserId);
+        if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+        {
+            return false;
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(changePasswordDto.CurrentPassword, user.PasswordHash))
+        {
+            return false;
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(changePasswordDto.NewPassword);
+        user.UpdatedAt = DateTime.Now;
+
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        return true;
+    }
+
+
     private AuthResponseDto CreateAuthResponse(
         Tbluser user,
         int? fallbackRoleId = null,

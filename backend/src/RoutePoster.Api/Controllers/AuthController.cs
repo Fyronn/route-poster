@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoutePoster.Application.DTOs.Auth;
 using RoutePoster.Application.Services.Interfaces;
@@ -38,4 +39,17 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto changePasswordDto)
+    {
+        var result = await _authService.ChangePasswordAsync(changePasswordDto);
+        if (!result)
+        {
+            return BadRequest(new { message = "Failed to change password. Please verify your current password." });
+        }
+
+        return Ok(new { message = "Password changed successfully." });
+    }
 }
+
