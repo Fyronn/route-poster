@@ -97,7 +97,12 @@ export function CorporateStopsPage({
 
   function updateField(key: keyof StopFormState, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
+
   }
+
+
+ const uniqueStops = Array.from( 
+  new Map(stops.map((stop) => [stop.stopId, stop])).values(), );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -188,7 +193,7 @@ export function CorporateStopsPage({
                 </tr>
               </thead>
               <tbody>
-                {items.map((stop, index) => (
+                {uniqueStops.map((stop, index) => (
                   <tr
                     className="border-b border-slate-100 last:border-0"
                     key={getStopKey(stop, index)}

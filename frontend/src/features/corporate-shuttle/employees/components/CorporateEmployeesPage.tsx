@@ -12,6 +12,8 @@ import { TableShell } from "@/components/shared/TableShell";
 
 import { createCorporateEmployee } from "../services/employee.service";
 import type { CorporateEmployee } from "../types";
+import { registerUser } from "@/features/auth/services/auth.service";
+import { RegisterUserPayload } from "@/features/auth/types";
 
 type EmployeeFormState = {
   email: string;
@@ -19,11 +21,14 @@ type EmployeeFormState = {
   identityNumber: string;
   lastName: string;
   phone: string;
+  password: string;
+
 };
 
 const emptyForm: EmployeeFormState = {
   email: "",
   firstName: "",
+  password: "",
   identityNumber: "",
   lastName: "",
   phone: "",
@@ -92,8 +97,21 @@ export function CorporateEmployeesPage({
     setIsSubmitting(true);
 
     try {
-      const createdEmployee = await createCorporateEmployee(clientId, form);
-      setItems((current) => [createdEmployee, ...current]);
+      //const createdEmployee = await createCorporateEmployee(clientId, form);
+
+      const registerUserPayload: RegisterUserPayload = {
+        clientId: clientId,
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        password: form.password,
+        roleId: 7,
+        phone: form.phone,
+        identityNumber:form.identityNumber
+
+      }
+      const registerPassenger = await registerUser(registerUserPayload)
+      //setItems((current) => [createdEmployee, ...current]);
       setForm(emptyForm);
       setIsOpen(false);
     } catch (submitError) {
@@ -227,6 +245,14 @@ export function CorporateEmployeesPage({
               required
               value={form.lastName}
             />
+
+            <InputField
+              label="Şifre"
+              onChange={(value) => updateField("password", value)}
+              placeholder="Yolcu uygulama Şifresi"
+              required
+              value={form.password}
+            />
             <InputField
               label="E-posta"
               onChange={(value) => updateField("email", value)}
@@ -234,6 +260,8 @@ export function CorporateEmployeesPage({
               type="email"
               value={form.email}
             />
+
+           
             <InputField
               label="Telefon"
               onChange={(value) => updateField("phone", value)}
@@ -246,6 +274,7 @@ export function CorporateEmployeesPage({
               placeholder="Opsiyonel"
               value={form.identityNumber}
             />
+
           </div>
           {error ? <p className="px-6 text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
