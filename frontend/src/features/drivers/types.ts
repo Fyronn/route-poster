@@ -7,3 +7,13 @@ export type Driver = {
   phone?: string | null;
   isActive?: boolean | null;
 };
+
+export type UpdateDriverDto = {
+  identityNumber?:string,
+  firstName?:string,
+  lastName?:string,
+  email?:string,
+  phone?:string,
+  isActive?:boolean
+  
+}

@@ -1,7 +1,7 @@
-import { getRequest, postRequest } from "@/lib/api";
+import { deleteRequest, getRequest, postRequest, putRequest } from "@/lib/api";
 
 import { driversMockData } from "../constants";
-import type { Driver } from "../types";
+import type { Driver, UpdateDriverDto } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
@@ -16,6 +16,44 @@ export async function getDrivers(options: ServiceOptions = {}) {
   } catch {
     return driversMockData;
   }
+}
+
+
+export async function updateDriver(driverId: number, data: UpdateDriverDto) {
+  try {
+    const updateDriver = await putRequest<Driver>(`/api/drivers/${driverId}`, {
+      identityNumber: data.identityNumber,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      isActive: data.isActive
+
+
+    })
+
+
+
+    return updateDriver
+
+  } catch (e) {
+    throw new Error(`${e}`)
+  }
+
+}
+
+export async function deleteDriver(driverId: number) {
+
+  try {
+    const deleteReq = await deleteRequest<Driver>(`/api/drivers/${driverId}`)
+
+  } catch (e) {
+    console.log("Driver silme işlemi sırasında bir sorun oluştu")
+
+  }
+
+
+
 }
 
 export async function createDriver(payload: {
