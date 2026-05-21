@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Check,
   Eye,
@@ -19,7 +19,7 @@ import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
 
-import { decideRouteRequest } from "../services/route-request-approval.service";
+import { decideRouteRequest, isRouteAssign } from "../services/route-request-approval.service";
 import type { RouteRequestApproval } from "../types";
 
 type StatusFilter = "all" | "requested" | "approved" | "rejected";
@@ -79,9 +79,8 @@ function getPassengerCount(route: RouteRequestApproval) {
 }
 
 function formatRouteScope(route: RouteRequestApproval) {
-  return `${getStopCount(route) ?? "-"} durak / ${
-    getPassengerCount(route) ?? "-"
-  } calisan`;
+  return `${getStopCount(route) ?? "-"} durak / ${getPassengerCount(route) ?? "-"
+    } calisan`;
 }
 
 function getOrderedStops(route: RouteRequestApproval) {
@@ -162,6 +161,18 @@ function hasVehicleAndDriver(route: RouteRequestApproval) {
   return Boolean(route.assignedVehicle && route.assignedDriver);
 }
 
+function isAssignedRoute(routeId: number) {
+  try {
+    const isAssigned = isRouteAssign(routeId);
+    console.log(isAssigned)
+    return isAssigned
+
+  } catch (e) {
+    return false
+  }
+
+}
+
 function getStatusFilterCount(
   items: RouteRequestApproval[],
   status: StatusFilter,
@@ -179,6 +190,9 @@ export function RouteRequestApprovalsPage({
   const [items, setItems] = useState(approvals);
   const [selectedId, setSelectedId] = useState(approvals[0]?.id ?? null);
 
+  const [assignedRoutes, setAssignedRoutes] = useState<Record<number, boolean>>({});
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [shiftFilter, setShiftFilter] = useState("all");
@@ -194,6 +208,33 @@ export function RouteRequestApprovalsPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+
+
+  useEffect(() => {
+    async function loadAssignmentStatuses() {
+      setAssignmentLoading(true);
+
+      try {
+        const results = await Promise.all(
+          items.map(async (item) => {
+            const isAssigned = await isRouteAssign(item.routeId);
+            return [item.routeId, isAssigned] as const;
+          }),
+        );
+
+        setAssignedRoutes(Object.fromEntries(results));
+      } catch (error) {
+        console.log("Rota atama durumları alınırken hata oluştu", error);
+      } finally {
+        setAssignmentLoading(false);
+      }
+    }
+
+    if (items.length > 0) {
+      loadAssignmentStatuses();
+    }
+  }, [items]);
 
   const shiftOptions = useMemo(() => {
     return Array.from(
@@ -328,12 +369,12 @@ export function RouteRequestApprovalsPage({
         current.map((item) =>
           item.id === rejectionRoute.id
             ? {
-                ...item,
-                comments: trimmedReason,
-                decisionNote: trimmedReason,
-                rejectionReason: trimmedReason,
-                status: "Rejected",
-              }
+              ...item,
+              comments: trimmedReason,
+              decisionNote: trimmedReason,
+              rejectionReason: trimmedReason,
+              status: "Rejected",
+            }
             : item,
         ),
       );
@@ -362,9 +403,9 @@ export function RouteRequestApprovalsPage({
         current.map((item) =>
           item.id === route.id
             ? {
-                ...item,
-                status: "Approved",
-              }
+              ...item,
+              status: "Approved",
+            }
             : item,
         ),
       );
@@ -379,6 +420,8 @@ export function RouteRequestApprovalsPage({
       setIsSubmitting(false);
     }
   }
+
+
 
   return (
     <>
@@ -487,11 +530,10 @@ export function RouteRequestApprovalsPage({
                     },
                   ].map((filter) => (
                     <button
-                      className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
-                        statusFilter === filter.value
-                          ? "border-teal-200 bg-teal-50 text-teal-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
+                      className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${statusFilter === filter.value
+                        ? "border-teal-200 bg-teal-50 text-teal-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
                       key={filter.value}
                       onClick={() =>
                         setStatusFilter(filter.value as StatusFilter)
@@ -609,9 +651,8 @@ export function RouteRequestApprovalsPage({
                 {filteredItems.length ? (
                   filteredItems.map((approval) => (
                     <tr
-                      className={`border-b border-slate-100 last:border-0 ${
-                        selectedId === approval.id ? "bg-teal-50/40" : ""
-                      }`}
+                      className={`border-b border-slate-100 last:border-0 ${selectedId === approval.id ? "bg-teal-50/40" : ""
+                        }`}
                       key={approval.id}
                     >
                       <td className="px-5 py-4">
@@ -637,10 +678,32 @@ export function RouteRequestApprovalsPage({
                         </p>
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-700">
-                        <p>{approval.assignedVehicle ?? "Arac bekliyor"}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {approval.assignedDriver ?? "Sofor bekliyor"}
-                        </p>
+                        {assignmentLoading ? (
+                          <>
+                            <p>Kontrol ediliyor...</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Rota atama durumu sorgulanıyor
+                            </p>
+                          </>
+                        ) : assignedRoutes[approval.routeId] ? (
+                          <>
+                            <p className="font-semibold text-emerald-700">
+                              Araç ve şoför ataması yapılmış
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Bu rota sefere atanmış
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-semibold text-amber-700">
+                              Araç ve şoför ataması bekliyor
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Bu rota henüz sefere atanmamış
+                            </p>
+                          </>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <StatusBadge status={approval.status || "Requested"} />
@@ -867,3 +930,4 @@ export function RouteRequestApprovalsPage({
     </>
   );
 }
+

@@ -8,7 +8,7 @@ import type {
 } from "@/features/corporate-shuttle/route-requests/types";
 
 import { routeRequestApprovalsMockData } from "../constants";
-import type { RouteRequestApproval } from "../types";
+import type { RouteAssignControlResponse, RouteRequestApproval } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
@@ -52,6 +52,27 @@ export async function decideRouteRequest(
   );
 }
 
+export async function isRouteAssign(routeId:number) {
+  
+
+  try{
+
+    const assign_request = await getRequest<RouteAssignControlResponse>(`/api/trips/route/${routeId}/assignment-status`)
+
+    const isAssigned = assign_request.isAssigned
+    return isAssigned
+
+
+
+  }catch(e){
+    return false
+    console.log(`Rotanın bir sefere atanıp atamandığı kontrol edilirken bir hata oluştu`)
+
+
+  }
+  
+}
+
 function normalizeRouteStops(
   stops?: RouteStopDto[] | null,
 ): RouteRequestStopPlan[] | undefined {
@@ -80,3 +101,5 @@ function normalizeRoutePassengers(
     passengerName: passenger.fullName || `Calisan #${passenger.passengerId}`,
   }));
 }
+
+
