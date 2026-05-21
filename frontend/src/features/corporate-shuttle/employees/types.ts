@@ -20,3 +20,24 @@ export type CorporateEmployee = {
   department?: string;
   preferredStop?: string;
 };
+
+
+export type CorporateEmployeeEditRequest = {
+  firstName?:string | null,
+  lastName?:string | null,
+  email?:string | null,
+  phone?:string | null,
+  identityNumber?:string | null,
+  isActive?:boolean | null
+}
+
+export type CorporateEmployeeEditResponse = {
+  userId:number,
+  clientId:number,
+  firstName:string,
+  lastName:string,
+  email:string,
+  phone:string,
+  identityNumber:string,
+  isActive:number
+} 
