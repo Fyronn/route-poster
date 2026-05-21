@@ -9,3 +9,8 @@ export type RouteRequestApproval = CorporateRouteRequest & {
   vehicleSuggestion: string;
   decisionNote?: string | null;
 };
+
+export type RouteAssignControlResponse = {
+  isAssigned:boolean,
+  tripId:number
+}
