@@ -1,7 +1,7 @@
-import { getRequest, postRequest } from "@/lib/api";
+import { deleteRequest, getRequest, postRequest, putRequest } from "@/lib/api";
 
 import { corporateEmployeesMockData } from "../constants";
-import type { CorporateEmployee } from "../types";
+import type { CorporateEmployee, CorporateEmployeeEditRequest, CorporateEmployeeEditResponse } from "../types";
 
 type ServiceOptions = {
   authToken?: string | null;
@@ -53,6 +53,37 @@ export async function createCorporateEmployee(
 
   return employee;
 }
+
+export async function editCorporateEmployee(clientId:number,userId:number,data:CorporateEmployeeEditRequest) {
+
+  try{
+
+    const editReq = await putRequest<CorporateEmployeeEditResponse>
+    (`/api/corporate-shuttle/clients/${clientId}/employees/${userId}`,data)
+    return editReq
+
+
+  }catch(e){
+    console.log(`Servis yöneticisi çalışanlarda güncelleme yapmaya çalışırken hata oluştu`)
+
+  }
+  
+}
+
+export async function deleteCorporateEmployee(clientId:number,userId:number) {
+
+  try{
+    const deleteReq = await deleteRequest<CorporateEmployeeEditResponse>(`/api/corporate-shuttle/clients/${clientId}/employees/${userId}`)
+    
+
+  }catch(e){
+    console.log(`Servis yöneticisi elemanları silmeye çalışırken bir sorunla karşılaştı ${e}`)
+  }
+
+  
+}
+
+
 
 function assertClientId(clientId: number) {
   if (!Number.isFinite(clientId) || clientId <= 0) {
