@@ -19,8 +19,30 @@ namespace RoutePoster.Application.Services
 
         public async Task<IEnumerable<StopRequestDto>> GetByClientIdAsync(int clientId)
         {
-            var entities = await _stopRequestRepository.FindAsync(s => s.ClientId == clientId);
-            return entities.Select(MapToDto);
+            var entities = await _stopRequestRepository.GetWithRoutesByClientIdAsync(clientId);
+            var result = new System.Collections.Generic.List<StopRequestDto>();
+
+            foreach (var stop in entities)
+            {
+                if (stop.TblrouteStops != null && stop.TblrouteStops.Any())
+                {
+                    foreach (var routeStop in stop.TblrouteStops)
+                    {
+                        var dto = MapToDto(stop);
+                        // Overwrite with the specific route for this combination
+                        dto.RouteId = routeStop.RouteId;
+                        dto.RouteName = routeStop.Route?.RouteName;
+                        result.Add(dto);
+                    }
+                }
+                else
+                {
+                    // Add stop even if it has no routes associated
+                    result.Add(MapToDto(stop));
+                }
+            }
+
+            return result;
         }
 
         public async Task<StopRequestDto?> GetByIdAsync(int id)
@@ -53,6 +75,7 @@ namespace RoutePoster.Application.Services
 
         private StopRequestDto MapToDto(Tblstop entity)
         {
+            var firstRouteStop = entity.TblrouteStops?.FirstOrDefault();
             return new StopRequestDto
             {
                 StopId = entity.Id,
@@ -63,7 +86,9 @@ namespace RoutePoster.Application.Services
                 Longitude = entity.Longitude,
                 Status = entity.Status,
                 OperatorNote = entity.OperatorNote,
-                IsActive = entity.IsActive
+                IsActive = entity.IsActive,
+                RouteId = firstRouteStop?.RouteId,
+                RouteName = firstRouteStop?.Route?.RouteName
             };
         }
     }

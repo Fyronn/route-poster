@@ -31,6 +31,22 @@ namespace RoutePoster.Api.Controllers
             return Ok(routes);
         }
 
+        [HttpGet("{routeId}")]
+        public async Task<ActionResult<RouteRequestDto>> GetById(int routeId)
+        {
+            var route = await _routeRequestService.GetByIdAsync(routeId);
+            if (route == null) return NotFound(new { Message = $"Route with ID {routeId} not found." });
+            return Ok(route);
+        }
+
+        [HttpGet("{routeId}/stops")]
+        public async Task<ActionResult<IEnumerable<RouteStopDto>>> GetRouteStops(int routeId)
+        {
+            var stops = await _routeRequestService.GetRouteStopsAsync(routeId);
+            if (stops == null) return NotFound(new { Message = $"Route with ID {routeId} not found." });
+            return Ok(stops);
+        }
+
         [HttpPost]
         public async Task<ActionResult<RouteRequestDto>> Create([FromBody] CreateRouteRequestDto dto)
         {

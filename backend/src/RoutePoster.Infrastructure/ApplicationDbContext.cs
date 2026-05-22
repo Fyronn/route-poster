@@ -155,7 +155,6 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.PickupStop).WithMany(p => p.TblpassengerRoutePreferencePickupStops)
                 .HasForeignKey(d => d.PickupStopId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FKPassengerRoutePreferencesPickupStop");
 
             entity.HasOne(d => d.Route).WithMany(p => p.TblpassengerRoutePreferences)
@@ -190,7 +189,6 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.PickupStop).WithMany(p => p.TblpassengerTemporaryPreferencePickupStops)
                 .HasForeignKey(d => d.PickupStopId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TempPref_PickupStop");
 
             entity.HasOne(d => d.Route).WithMany(p => p.TblpassengerTemporaryPreferences)

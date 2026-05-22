@@ -15,6 +15,7 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.RouteRequests
         public TimeOnly? PlannedStartTime { get; set; }
         public int? EstimatedDurationMinutes { get; set; }
         public bool? IsActive { get; set; }
+        public string? RejectionReason { get; set; }
         
         public List<RouteStopDto> Stops { get; set; } = new();
         public List<RoutePassengerDto> Passengers { get; set; } = new();

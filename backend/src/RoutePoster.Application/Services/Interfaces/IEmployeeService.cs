@@ -9,5 +9,7 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<IEnumerable<EmployeeDto>> GetByClientIdAsync(int clientId);
         Task<EmployeeDto?> GetByIdAsync(int id);
         Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto);
+        Task<EmployeeDto?> UpdateAsync(int id, UpdateEmployeeDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }

@@ -9,6 +9,7 @@ public interface IPassengerPreferenceRepository : IGenericRepository<Tblpassenge
 {
     Task<IEnumerable<TblpassengerRoutePreference>> GetWithDetailsByPassengerIdAsync(int passengerId);
     Task<TblpassengerRoutePreference?> GetDefaultWithDetailsAsync(int passengerId);
+    Task<TblpassengerRoutePreference?> GetDefaultWithDetailsByRouteAsync(int passengerId, int routeId);
 }
 
 public interface IPassengerTemporaryPreferenceRepository : IGenericRepository<TblpassengerTemporaryPreference>

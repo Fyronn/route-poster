@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace RoutePoster.Domain.Entities;
@@ -11,7 +11,7 @@ public partial class TblpassengerTemporaryPreference
 
     public int RouteId { get; set; }
 
-    public int PickupStopId { get; set; }
+    public int? PickupStopId { get; set; }
 
     public int? DropoffStopId { get; set; }
 
@@ -31,7 +31,7 @@ public partial class TblpassengerTemporaryPreference
 
     public virtual Tbluser Passenger { get; set; } = null!;
 
-    public virtual Tblstop PickupStop { get; set; } = null!;
+    public virtual Tblstop? PickupStop { get; set; }
 
     public virtual Tblroute Route { get; set; } = null!;
 }

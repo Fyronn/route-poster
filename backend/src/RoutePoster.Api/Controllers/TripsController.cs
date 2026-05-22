@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,42 @@ namespace RoutePoster.Api.Controllers
         {
             var createdTrip = await _tripService.CreateAsync(dto);
             return Ok(createdTrip);
+        }
+
+        [HttpPost("{id}/start")]
+        public async Task<ActionResult<TripDto>> StartTrip(int id, [FromBody] TripActionRequestDto request)
+        {
+            try
+            {
+                var result = await _tripService.StartTripAsync(id, request.DriverId);
+                if (result == null) return NotFound(new { message = "Trip not found." });
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/end")]
+        public async Task<ActionResult<TripDto>> EndTrip(int id, [FromBody] TripActionRequestDto request)
+        {
+            try
+            {
+                var result = await _tripService.EndTripAsync(id, request.DriverId);
+                if (result == null) return NotFound(new { message = "Trip not found." });
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet("route/{routeId}/assignment-status")]
+        public async Task<ActionResult<TripAssignmentStatusDto>> GetAssignmentStatusByRouteId(int routeId)
+        {
+            var result = await _tripService.CheckAssignmentStatusByRouteIdAsync(routeId);
+            return Ok(result);
         }
     }
 }
