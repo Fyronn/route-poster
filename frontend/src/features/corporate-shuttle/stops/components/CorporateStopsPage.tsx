@@ -43,7 +43,10 @@ function getFiniteNumber(value: unknown) {
 }
 
 function getStopKey(stop: CorporateStopRequest, index: number) {
-  return stop.stopId ?? `${stop.clientId ?? "client"}-${stop.stopName ?? "stop"}-${index}`;
+  return (
+    stop.stopId ??
+    `${stop.clientId ?? "client"}-${stop.stopName ?? "stop"}-${index}`
+  );
 }
 
 function isApprovedStatus(status?: string | null) {
@@ -70,6 +73,7 @@ function InputField({
       <span className="text-sm font-semibold text-slate-800">
         {label} {required ? <span className="text-red-500">*</span> : null}
       </span>
+
       <input
         className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
         onChange={(event) => onChange(event.target.value)}
@@ -79,6 +83,35 @@ function InputField({
         value={value}
       />
     </label>
+  );
+}
+
+function OperatorNoteCell({ note }: { note?: string | null }) {
+  const cleanNote = note?.trim();
+
+  if (!cleanNote) {
+    return (
+      <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-400">
+        Not yok
+      </span>
+    );
+  }
+
+  return (
+    <div
+      className="group max-w-[300px] rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-teal-200 hover:bg-teal-50/60"
+      title={cleanNote}
+    >
+      <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-600">
+        {cleanNote}
+      </p>
+
+      {cleanNote.length > 80 ? (
+        <span className="mt-1 inline-flex text-[10px] font-bold text-teal-600">
+          Detay için üzerine gel
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -97,12 +130,11 @@ export function CorporateStopsPage({
 
   function updateField(key: keyof StopFormState, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
-
   }
 
-
- const uniqueStops = Array.from( 
-  new Map(stops.map((stop) => [stop.stopId, stop])).values(), );
+  const uniqueStops = Array.from(
+    new Map(items.map((stop) => [stop.stopId, stop])).values(),
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -152,12 +184,14 @@ export function CorporateStopsPage({
             label="Durak Talebi"
             value={items.length}
           />
+
           <MetricCard
             hint="Rotaya bağlanmaya hazır"
             icon={MapPin}
             label="Onaylı Durak"
             value={items.filter((stop) => isApprovedStatus(stop.status)).length}
           />
+
           <MetricCard
             hint="Bu duraklara bağlı çalışan"
             icon={MapPin}
@@ -175,49 +209,65 @@ export function CorporateStopsPage({
             searchPlaceholder="Durak veya lokasyon ara..."
             title="Durak Talepleri"
           >
-            <table className="w-full min-w-[900px] border-collapse">
+            <table className="w-full min-w-[1050px] border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70">
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                     Durak
                   </th>
+
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                     Tip
                   </th>
+
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                     Çalışan
                   </th>
+
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
                     Durum
                   </th>
+
+                  <th className="w-[320px] px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
+                    Operatör Notu
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
                 {uniqueStops.map((stop, index) => (
                   <tr
                     className="border-b border-slate-100 last:border-0"
                     key={getStopKey(stop, index)}
                   >
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 align-top">
                       <p className="font-semibold text-slate-950">
                         {stop.stopName || "-"}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+
+                      <p className="mt-1 max-w-[320px] text-xs leading-5 text-slate-500">
                         {stop.address || "-"}
                       </p>
                     </td>
-                    <td className="px-5 py-4">
+
+                    <td className="px-5 py-4 align-top">
                       <Badge variant="neutral">
                         {stopTypeLabels[stop.stopType || "both"] ??
                           stop.stopType ??
                           "both"}
                       </Badge>
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-700">
+
+                    <td className="px-5 py-4 align-top text-sm text-slate-700">
                       {getFiniteNumber(stop.employeeCount)}
                     </td>
-                    <td className="px-5 py-4">
+
+                    <td className="px-5 py-4 align-top">
                       <StatusBadge status={stop.status || "requested"} />
+                    </td>
+
+                    <td className="px-5 py-4 align-top">
+                      <OperatorNoteCell note={stop.operatorNote} />
                     </td>
                   </tr>
                 ))}
@@ -228,16 +278,20 @@ export function CorporateStopsPage({
           <Card className="min-h-[360px] overflow-hidden">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="font-semibold text-slate-950">Harita Alanı</h2>
+
               <p className="mt-1 text-sm text-slate-500">
                 Gerçek harita entegrasyonu için hazır placeholder.
               </p>
             </div>
+
             <div className="flex h-[280px] items-center justify-center bg-[linear-gradient(135deg,#f8fafc_25%,#eef2f7_25%,#eef2f7_50%,#f8fafc_50%,#f8fafc_75%,#eef2f7_75%)] bg-[length:28px_28px]">
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center shadow-sm">
                 <MapPin className="mx-auto h-6 w-6 text-teal-700" />
+
                 <p className="mt-2 text-sm font-semibold text-slate-950">
                   Durak lokasyonları
                 </p>
+
                 <p className="mt-1 text-xs text-slate-500">
                   Map provider bağlandığında burada görüntülenecek.
                 </p>
@@ -262,12 +316,14 @@ export function CorporateStopsPage({
               required
               value={form.stopName}
             />
+
             <InputField
               label="Adres"
               onChange={(value) => updateField("address", value)}
               placeholder="Kadıköy, İstanbul"
               value={form.address}
             />
+
             <InputField
               label="Enlem"
               onChange={(value) => updateField("latitude", value)}
@@ -275,6 +331,7 @@ export function CorporateStopsPage({
               type="number"
               value={form.latitude}
             />
+
             <InputField
               label="Boylam"
               onChange={(value) => updateField("longitude", value)}
@@ -282,6 +339,7 @@ export function CorporateStopsPage({
               type="number"
               value={form.longitude}
             />
+
             <div className="md:col-span-2">
               <InputField
                 label="Operatör notu"
@@ -291,11 +349,18 @@ export function CorporateStopsPage({
               />
             </div>
           </div>
+
           {error ? <p className="px-6 text-sm text-red-600">{error}</p> : null}
+
           <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-            <Button onClick={() => setIsOpen(false)} variant="secondary">
+            <Button
+              onClick={() => setIsOpen(false)}
+              type="button"
+              variant="secondary"
+            >
               Vazgeç
             </Button>
+
             <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
             </Button>
