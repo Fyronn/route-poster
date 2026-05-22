@@ -130,7 +130,17 @@ export async function login(credentials: LoginCredentials) {
     { skipAuth: true },
   );
 
+  if (response.user?.roleId !== 2 && response.user?.roleId !== 6) {
+
+    throw new Error(`Uygulumaya girmek için yetkiniz bulunmamaktadır `)
+    
+  }
+
   return mapAuthResponseDto(response);
+
+
+
+
 }
 
 export async function registerUser(payload: RegisterUserPayload) {
@@ -143,6 +153,11 @@ export async function registerUser(payload: RegisterUserPayload) {
       password: payload.password,
       roleId: payload.roleId,
       clientId: payload.clientId,
+      transportCompanyId: payload.transportCompanyId,
+      departmentId: payload.departmentId,
+      identityNumber: payload.identityNumber,
+      phone: payload.phone
+
     },
     { skipAuth: true },
   );

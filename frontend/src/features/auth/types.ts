@@ -40,4 +40,9 @@ export type RegisterUserPayload = {
   lastName: string;
   password: string;
   roleId?: number | null;
+  transportCompanyId?:number | null,
+  departmentId?:number | null,
+  identityNumber?:string | null,
+  phone?:string
+
 };

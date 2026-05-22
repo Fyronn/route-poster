@@ -1,12 +1,21 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Route, Trash2, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Clock,
+  MapPin,
+  Plus,
+  Route,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { MetricCard } from "@/components/shared/MetricCard";
-import { Modal } from "@/components/shared/Modal";
 import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
@@ -53,7 +62,7 @@ function InputField({
         {label} {required ? <span className="text-red-500">*</span> : null}
       </span>
       <input
-        className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
@@ -93,6 +102,47 @@ function SelectField({
   );
 }
 
+function PanelCard({
+  children,
+  description,
+  icon,
+  right,
+  title,
+}: {
+  children: React.ReactNode;
+  description?: string;
+  icon?: React.ReactNode;
+  right?: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+        <div className="flex items-start gap-3">
+          {icon ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+              {icon}
+            </div>
+          ) : null}
+
+          <div>
+            <h3 className="text-base font-bold text-slate-950">{title}</h3>
+            {description ? (
+              <p className="mt-1 text-sm leading-5 text-slate-500">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {right}
+      </div>
+
+      <div className="p-5">{children}</div>
+    </section>
+  );
+}
+
 function normalizeStopPlan(plan: RouteRequestStopPlan[]) {
   return plan.map((stop, index) => ({ ...stop, sequence: index + 1 }));
 }
@@ -108,7 +158,10 @@ function getEmployeeId(employee: CorporateEmployee) {
 }
 
 function getEmployeeName(employee: CorporateEmployee) {
-  return [employee.firstName, employee.lastName].filter(Boolean).join(" ") || "Isimsiz calisan";
+  return (
+    [employee.firstName, employee.lastName].filter(Boolean).join(" ") ||
+    "Isimsiz calisan"
+  );
 }
 
 function getRequestKey(request: CorporateRouteRequest, index: number) {
@@ -201,6 +254,22 @@ export function CorporateRouteRequestsPage({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function openRouteRequestPanel() {
+    setError(null);
+    setMessage(null);
+    setIsOpen(true);
+  }
+
+  function closeRouteRequestPanel() {
+    setIsOpen(false);
+  }
+
+  function resetRouteRequestForm() {
+    setForm(emptyForm);
+    setStopPlan([]);
+    setSelectedPassengerIds([]);
+  }
+
   function togglePassenger(employee: CorporateEmployee) {
     const employeeId = getEmployeeId(employee);
     if (employeeId === null) return;
@@ -291,9 +360,8 @@ export function CorporateRouteRequestsPage({
         },
         ...current,
       ]);
-      setForm(emptyForm);
-      setStopPlan([]);
-      setSelectedPassengerIds([]);
+
+      resetRouteRequestForm();
       setIsOpen(false);
       setMessage("Rota talebi olusturuldu ve ABC Turizm onayina dustu.");
     } catch (submitError) {
@@ -311,13 +379,7 @@ export function CorporateRouteRequestsPage({
     <>
       <PageSection
         action={
-          <Button
-            onClick={() => {
-              setError(null);
-              setMessage(null);
-              setIsOpen(true);
-            }}
-          >
+          <Button onClick={openRouteRequestPanel}>
             <Plus className="h-4 w-4" />
             Rota Talebi Ekle
           </Button>
@@ -331,6 +393,7 @@ export function CorporateRouteRequestsPage({
             {message}
           </div>
         ) : null}
+
         {error ? (
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
             {error}
@@ -344,18 +407,21 @@ export function CorporateRouteRequestsPage({
             label="Toplam Talep"
             value={items.length}
           />
+
           <MetricCard
             hint="ABC Turizm incelemesi bekliyor"
             icon={Route}
             label="Onay Bekleyen"
             value={items.filter((request) => isRequested(request.status)).length}
           />
+
           <MetricCard
             hint="Admin tarafindan onaylandi"
             icon={Route}
             label="Onaylanan"
             value={items.filter((request) => isApproved(request.status)).length}
           />
+
           <MetricCard
             hint="Red sebebiyle geri donen"
             icon={X}
@@ -386,6 +452,7 @@ export function CorporateRouteRequestsPage({
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {items.map((request, index) => (
                 <tr
@@ -400,18 +467,23 @@ export function CorporateRouteRequestsPage({
                       {request.clientName || "-"}
                     </p>
                   </td>
+
                   <td className="px-5 py-4">
                     <Badge variant="neutral">{request.shiftType || "-"}</Badge>
                     <p className="mt-2 text-xs text-slate-500">
-                      {request.operatingDays || "-"} / {request.plannedStartTime || "-"}
+                      {request.operatingDays || "-"} /{" "}
+                      {request.plannedStartTime || "-"}
                     </p>
                   </td>
+
                   <td className="px-5 py-4 text-sm text-slate-700">
                     {request.plannedStops?.length ? (
-                      <div className="flex max-w-[320px] flex-wrap gap-1.5">
+                      <div className="flex max-w-[420px] flex-wrap gap-1.5">
                         {request.plannedStops.map((stop, index) => (
                           <Badge
-                            key={`${request.routeId ?? "route"}-${stop.stopId}-${index}`}
+                            key={`${request.routeId ?? "route"}-${
+                              stop.stopId
+                            }-${index}`}
                             variant="neutral"
                           >
                             {stop.sequence}. {stop.stopName}
@@ -425,8 +497,10 @@ export function CorporateRouteRequestsPage({
                       formatRouteScope(request)
                     )}
                   </td>
+
                   <td className="px-5 py-4">
                     <StatusBadge status={request.status || "Draft"} />
+
                     {isRejected(request.status) && getDecisionReason(request) ? (
                       <p className="mt-2 max-w-[280px] text-xs font-medium text-red-600">
                         Red sebebi: {getDecisionReason(request)}
@@ -440,255 +514,418 @@ export function CorporateRouteRequestsPage({
         </TableShell>
       </PageSection>
 
-      <Modal
-        description="Durak sirasi ve hedef saatler rota talebi ile birlikte gonderilir."
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        title="Rota Talebi Ekle"
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-5 px-6 py-5 md:grid-cols-2">
-            <InputField
-              label="Rota adi"
-              onChange={(value) => updateField("routeName", value)}
-              placeholder="Kadikoy - Maslak Sabah Servisi"
-              required
-              value={form.routeName}
-            />
-            <SelectField
-              label="Vardiya"
-              onChange={(value) => updateField("shift", value)}
-              options={[
-                { label: "Sabah", value: "Sabah" },
-                { label: "Aksam", value: "Aksam" },
-                { label: "Vardiya", value: "Vardiya" },
-              ]}
-              value={form.shift}
-            />
-            <SelectField
-              label="Yon"
-              onChange={(value) => updateField("direction", value)}
-              options={[
-                { label: "Gidis", value: "Gidis" },
-                { label: "Donus", value: "Donus" },
-              ]}
-              value={form.direction}
-            />
-            <InputField
-              label="Baslangic saati"
-              onChange={(value) => updateField("plannedStartTime", value)}
-              required
-              type="time"
-              value={form.plannedStartTime}
-            />
-            <SelectField
-              label="Calisma gunleri"
-              onChange={(value) => updateField("workingDays", value)}
-              options={[
-                { label: "Pazartesi - Cuma", value: "1,2,3,4,5" },
-                { label: "Pazartesi - Cumartesi", value: "1,2,3,4,5,6" },
-              ]}
-              value={form.workingDays}
-            />
-
-            <div className="md:col-span-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
+      {isOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-[2rem] bg-slate-50 shadow-2xl">
+            <div className="flex items-start justify-between gap-6 border-b border-slate-200 bg-white px-6 py-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                    <Route className="h-5 w-5" />
+                  </span>
                   <div>
-                    <h3 className="font-semibold text-slate-950">
-                      Durak sirasi
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Eklenen duraklar bu sirayla rota talebine baglanir.
-                      Hedef saat opsiyoneldir.
+                    <p className="text-xs font-bold uppercase tracking-wide text-teal-700">
+                      Servis Yönetimi
                     </p>
-                  </div>
-                  <Badge variant="teal">{stopPlan.length} durak</Badge>
-                </div>
-
-                <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase text-slate-500">
-                      Mevcut duraklar
-                    </p>
-                    <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
-                      {stops.length ? (
-                        stops.map((stop, index) => {
-                          const stopId = getStopId(stop);
-                          const isSelected = stopPlan.some(
-                            (item) => item.stopId === stopId,
-                          );
-
-                          return (
-                            <button
-                              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
-                              disabled={isSelected || stopId === null}
-                              key={stopId ?? `${stop.stopName ?? "stop"}-${index}`}
-                              onClick={() => addStop(stop)}
-                              type="button"
-                            >
-                              <span>
-                                <span className="font-semibold text-slate-900">
-                                  {stop.stopName}
-                                </span>
-                                <span className="mt-0.5 block text-xs text-slate-500">
-                                  {stop.address}
-                                </span>
-                              </span>
-                              <span className="text-xs font-semibold text-teal-700">
-                                {isSelected ? "Eklendi" : "Ekle"}
-                              </span>
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                          Once durak talebi olusturun.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase text-slate-500">
-                      Secilen rota sirasi
-                    </p>
-                    <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
-                      {stopPlan.length ? (
-                        stopPlan.map((stop, index) => (
-                          <div
-                            className="rounded-xl border border-slate-200 p-3"
-                            key={stop.stopId}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
-                                {stop.sequence}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-slate-950">
-                                  {stop.stopName}
-                                </p>
-                                <input
-                                  className="mt-2 h-9 w-full rounded-lg border border-slate-200 px-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50"
-                                  onChange={(event) =>
-                                    updateStopTime(
-                                      stop.stopId,
-                                      event.target.value,
-                                    )
-                                  }
-                                  type="time"
-                                  value={stop.estimatedArrivalTime ?? ""}
-                                />
-                              </div>
-                              <div className="flex gap-1">
-                                <Button
-                                  disabled={index === 0}
-                                  onClick={() => moveStop(stop.stopId, "up")}
-                                  size="icon"
-                                  variant="secondary"
-                                >
-                                  <ArrowUp className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  disabled={index === stopPlan.length - 1}
-                                  onClick={() => moveStop(stop.stopId, "down")}
-                                  size="icon"
-                                  variant="secondary"
-                                >
-                                  <ArrowDown className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  onClick={() => removeStop(stop.stopId)}
-                                  size="icon"
-                                  variant="danger"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                          Sol taraftan durak ekleyin.
-                        </p>
-                      )}
-                    </div>
+                    <h2 className="text-2xl font-bold text-slate-950">
+                      Rota Talebi Ekle
+                    </h2>
                   </div>
                 </div>
+
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500">
+                  Rota bilgilerini gir, durak sırasını oluştur ve bu rotada
+                  taşınacak çalışanları seç. Talep oluşturulduktan sonra ABC
+                  Turizm onay ekranına düşer.
+                </p>
               </div>
+
+              <button
+                className="rounded-2xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                onClick={closeRouteRequestPanel}
+                type="button"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <div className="md:col-span-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-slate-950">
-                      Calisanlar
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Bu rotada tasinacak calisanlari secin.
-                    </p>
-                  </div>
-                  <Badge variant="teal">
-                    {selectedPassengerIds.length} calisan
-                  </Badge>
-                </div>
+            <form
+              className="flex min-h-0 flex-1 flex-col"
+              onSubmit={handleSubmit}
+            >
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <PanelCard
+                      description="Rotanın temel bilgilerini buradan belirleyin."
+                      icon={<Clock className="h-5 w-5" />}
+                      title="Rota Bilgileri"
+                    >
+                      <div className="grid gap-4">
+                        <InputField
+                          label="Rota adı"
+                          onChange={(value) => updateField("routeName", value)}
+                          placeholder="Kadıköy - Maslak Sabah Servisi"
+                          required
+                          value={form.routeName}
+                        />
 
-                <div className="mt-4 grid max-h-64 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
-                  {employees.length ? (
-                    employees.map((employee, index) => {
-                      const employeeId = getEmployeeId(employee);
-                      const isSelected =
-                        employeeId !== null &&
-                        selectedPassengerIds.includes(employeeId);
-
-                      return (
-                        <button
-                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
-                          disabled={employeeId === null}
-                          key={employeeId ?? `${employee.email ?? "employee"}-${index}`}
-                          onClick={() => togglePassenger(employee)}
-                          type="button"
-                        >
-                          <span className="min-w-0">
-                            <span className="block truncate font-semibold text-slate-900">
-                              {getEmployeeName(employee)}
-                            </span>
-                            <span className="mt-0.5 block truncate text-xs text-slate-500">
-                              {employee.email || employee.phone || "-"}
-                            </span>
-                          </span>
-                          <span
-                            className={
-                              isSelected
-                                ? "h-5 w-5 rounded-full border border-teal-500 bg-teal-600"
-                                : "h-5 w-5 rounded-full border border-slate-300 bg-white"
-                            }
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <SelectField
+                            label="Vardiya"
+                            onChange={(value) => updateField("shift", value)}
+                            options={[
+                              { label: "Sabah", value: "Sabah" },
+                              { label: "Akşam", value: "Aksam" },
+                              { label: "Vardiya", value: "Vardiya" },
+                            ]}
+                            value={form.shift}
                           />
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 md:col-span-2">
-                      Once calisan ekleyin.
-                    </p>
-                  )}
+
+                          <SelectField
+                            label="Yön"
+                            onChange={(value) =>
+                              updateField("direction", value)
+                            }
+                            options={[
+                              { label: "Gidiş", value: "Gidis" },
+                              { label: "Dönüş", value: "Donus" },
+                            ]}
+                            value={form.direction}
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <InputField
+                            label="Başlangıç saati"
+                            onChange={(value) =>
+                              updateField("plannedStartTime", value)
+                            }
+                            required
+                            type="time"
+                            value={form.plannedStartTime}
+                          />
+
+                          <SelectField
+                            label="Çalışma günleri"
+                            onChange={(value) =>
+                              updateField("workingDays", value)
+                            }
+                            options={[
+                              {
+                                label: "Pazartesi - Cuma",
+                                value: "1,2,3,4,5",
+                              },
+                              {
+                                label: "Pazartesi - Cumartesi",
+                                value: "1,2,3,4,5,6",
+                              },
+                            ]}
+                            value={form.workingDays}
+                          />
+                        </div>
+                      </div>
+                    </PanelCard>
+
+                    <PanelCard
+                      description="Seçtiğin durak ve çalışan sayısı burada özetlenir."
+                      icon={<Route className="h-5 w-5" />}
+                      title="Talep Özeti"
+                    >
+                      <div className="grid gap-3">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-xs font-semibold uppercase text-slate-500">
+                            Rota
+                          </p>
+                          <p className="mt-1 font-bold text-slate-950">
+                            {form.routeName || "Henüz rota adı girilmedi"}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-teal-100 bg-teal-50 p-4">
+                            <p className="text-xs font-semibold uppercase text-teal-700">
+                              Durak
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-teal-800">
+                              {stopPlan.length}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                            <p className="text-xs font-semibold uppercase text-blue-700">
+                              Çalışan
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-blue-800">
+                              {selectedPassengerIds.length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </PanelCard>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      <PanelCard
+                        description="Rota içinde kullanılacak durakları seçin."
+                        icon={<MapPin className="h-5 w-5" />}
+                        right={<Badge variant="teal">{stops.length} durak</Badge>}
+                        title="Mevcut Duraklar"
+                      >
+                        <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                          {stops.length ? (
+                            stops.map((stop, index) => {
+                              const stopId = getStopId(stop);
+                              const isSelected = stopPlan.some(
+                                (item) => item.stopId === stopId,
+                              );
+
+                              return (
+                                <button
+                                  className={[
+                                    "group flex w-full items-start justify-between gap-4 rounded-2xl border px-4 py-3 text-left transition",
+                                    isSelected
+                                      ? "border-teal-200 bg-teal-50"
+                                      : "border-slate-200 bg-white hover:border-teal-300 hover:bg-teal-50/60",
+                                  ].join(" ")}
+                                  disabled={isSelected || stopId === null}
+                                  key={
+                                    stopId ??
+                                    `${stop.stopName ?? "stop"}-${index}`
+                                  }
+                                  onClick={() => addStop(stop)}
+                                  type="button"
+                                >
+                                  <span className="min-w-0">
+                                    <span className="block truncate font-bold text-slate-950">
+                                      {stop.stopName || "İsimsiz durak"}
+                                    </span>
+                                    <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                                      {stop.address || "Adres bilgisi yok"}
+                                    </span>
+                                  </span>
+
+                                  <span
+                                    className={[
+                                      "shrink-0 rounded-full px-3 py-1 text-xs font-bold",
+                                      isSelected
+                                        ? "bg-teal-600 text-white"
+                                        : "bg-slate-100 text-slate-600 group-hover:bg-teal-600 group-hover:text-white",
+                                    ].join(" ")}
+                                  >
+                                    {isSelected ? "Eklendi" : "Ekle"}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                              Önce durak talebi oluşturun.
+                            </div>
+                          )}
+                        </div>
+                      </PanelCard>
+
+                      <PanelCard
+                        description="Durakları yukarı/aşağı taşıyarak rota sırasını belirleyin."
+                        icon={<Route className="h-5 w-5" />}
+                        right={
+                          <Badge variant="teal">{stopPlan.length} seçildi</Badge>
+                        }
+                        title="Seçilen Rota Sırası"
+                      >
+                        <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                          {stopPlan.length ? (
+                            stopPlan.map((stop, index) => (
+                              <div
+                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                key={stop.stopId}
+                              >
+                                <div className="flex items-start gap-4">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-600 text-sm font-black text-white">
+                                    {stop.sequence}
+                                  </div>
+
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-bold text-slate-950">
+                                      {stop.stopName}
+                                    </p>
+
+                                    <label className="mt-3 block">
+                                      <span className="text-xs font-semibold text-slate-500">
+                                        Tahmini varış saati
+                                      </span>
+                                      <input
+                                        className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                                        onChange={(event) =>
+                                          updateStopTime(
+                                            stop.stopId,
+                                            event.target.value,
+                                          )
+                                        }
+                                        type="time"
+                                        value={stop.estimatedArrivalTime ?? ""}
+                                      />
+                                    </label>
+                                  </div>
+
+                                  <div className="flex shrink-0 flex-col gap-1">
+                                    <button
+                                      className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+                                      disabled={index === 0}
+                                      onClick={() =>
+                                        moveStop(stop.stopId, "up")
+                                      }
+                                      type="button"
+                                    >
+                                      <ArrowUp className="h-4 w-4" />
+                                    </button>
+
+                                    <button
+                                      className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+                                      disabled={index === stopPlan.length - 1}
+                                      onClick={() =>
+                                        moveStop(stop.stopId, "down")
+                                      }
+                                      type="button"
+                                    >
+                                      <ArrowDown className="h-4 w-4" />
+                                    </button>
+
+                                    <button
+                                      className="rounded-xl border border-red-100 bg-red-50 p-2 text-red-600 transition hover:bg-red-100"
+                                      onClick={() => removeStop(stop.stopId)}
+                                      type="button"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+                              <MapPin className="mx-auto h-8 w-8 text-slate-400" />
+                              <p className="mt-3 font-semibold text-slate-700">
+                                Henüz durak seçilmedi
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Sol taraftan durak ekleyerek rota sırasını
+                                oluşturun.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </PanelCard>
+                    </div>
+
+                    <PanelCard
+                      description="Bu rotada taşınacak çalışanları seçin. Kartlara tıklayarak seçim yapabilirsiniz."
+                      icon={<Users className="h-5 w-5" />}
+                      right={
+                        <Badge variant="teal">
+                          {selectedPassengerIds.length} çalışan seçildi
+                        </Badge>
+                      }
+                      title="Çalışanlar"
+                    >
+                      <div className="grid max-h-[360px] gap-3 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+                        {employees.length ? (
+                          employees.map((employee, index) => {
+                            const employeeId = getEmployeeId(employee);
+                            const isSelected =
+                              employeeId !== null &&
+                              selectedPassengerIds.includes(employeeId);
+
+                            return (
+                              <button
+                                className={[
+                                  "flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-left transition",
+                                  isSelected
+                                    ? "border-teal-300 bg-teal-50 shadow-sm"
+                                    : "border-slate-200 bg-white hover:border-teal-300 hover:bg-teal-50/60",
+                                ].join(" ")}
+                                disabled={employeeId === null}
+                                key={
+                                  employeeId ??
+                                  `${employee.email ?? "employee"}-${index}`
+                                }
+                                onClick={() => togglePassenger(employee)}
+                                type="button"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate font-bold text-slate-950">
+                                    {getEmployeeName(employee)}
+                                  </span>
+                                  <span className="mt-1 block truncate text-xs text-slate-500">
+                                    {employee.email || employee.phone || "-"}
+                                  </span>
+                                </span>
+
+                                <span
+                                  className={[
+                                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition",
+                                    isSelected
+                                      ? "border-teal-600 bg-teal-600"
+                                      : "border-slate-300 bg-white",
+                                  ].join(" ")}
+                                >
+                                  {isSelected ? (
+                                    <span className="h-2.5 w-2.5 rounded-full bg-white" />
+                                  ) : null}
+                                </span>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 md:col-span-2 xl:col-span-3">
+                            Önce çalışan ekleyin.
+                          </div>
+                        )}
+                      </div>
+                    </PanelCard>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {error ? (
+                <div className="border-t border-red-100 bg-red-50 px-6 py-3 text-sm font-semibold text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
+              <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-6 py-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold">
+                    {stopPlan.length} durak
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold">
+                    {selectedPassengerIds.length} çalışan
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold">
+                    {form.shift} / {form.direction}
+                  </span>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    onClick={closeRouteRequestPanel}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Vazgeç
+                  </Button>
+
+                  <Button disabled={isSubmitting} type="submit">
+                    {isSubmitting ? "Kaydediliyor..." : "Rota Talebini Kaydet"}
+                  </Button>
+                </div>
+              </div>
+            </form>
           </div>
-          {error ? <p className="px-6 text-sm text-red-600">{error}</p> : null}
-          <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-            <Button onClick={() => setIsOpen(false)} variant="secondary">
-              Vazgec
-            </Button>
-            <Button disabled={isSubmitting} type="submit">
-              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+      ) : null}
     </>
   );
 }

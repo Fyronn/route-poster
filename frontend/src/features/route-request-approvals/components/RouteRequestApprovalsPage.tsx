@@ -1,7 +1,15 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { Check, Eye, Route, X } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  Eye,
+  Filter,
+  Route,
+  RotateCcw,
+  Search,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -11,8 +19,13 @@ import { PageSection } from "@/components/shared/PageSection";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableShell } from "@/components/shared/TableShell";
 
-import { decideRouteRequest } from "../services/route-request-approval.service";
+import { decideRouteRequest, isRouteAssign } from "../services/route-request-approval.service";
 import type { RouteRequestApproval } from "../types";
+
+type StatusFilter = "all" | "requested" | "approved" | "rejected";
+type AssignmentFilter = "all" | "assigned" | "missing";
+type StopFilter = "all" | "withStops" | "withoutStops";
+type SortFilter = "newest" | "oldest" | "routeAsc" | "clientAsc";
 
 function normalizeStatus(status?: string | null) {
   return String(status ?? "")
@@ -66,9 +79,8 @@ function getPassengerCount(route: RouteRequestApproval) {
 }
 
 function formatRouteScope(route: RouteRequestApproval) {
-  return `${getStopCount(route) ?? "-"} durak / ${
-    getPassengerCount(route) ?? "-"
-  } calisan`;
+  return `${getStopCount(route) ?? "-"} durak / ${getPassengerCount(route) ?? "-"
+    } calisan`;
 }
 
 function getOrderedStops(route: RouteRequestApproval) {
@@ -117,6 +129,59 @@ function formatStopPreview(route: RouteRequestApproval) {
   return stops.length > 3 ? `${preview} +${stops.length - 3}` : preview;
 }
 
+function getSearchText(route: RouteRequestApproval) {
+  const stops = getOrderedStops(route)
+    .map((stop) => stop.stopName)
+    .join(" ");
+
+  const passengers = getRoutePassengers(route)
+    .map((passenger) => passenger.passengerName)
+    .join(" ");
+
+  return [
+    route.routeName,
+    route.clientName,
+    route.clientId,
+    route.shiftType,
+    route.operatingDays,
+    route.plannedStartTime,
+    route.assignedVehicle,
+    route.assignedDriver,
+    route.status,
+    getDecisionReason(route),
+    stops,
+    passengers,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+}
+
+function hasVehicleAndDriver(route: RouteRequestApproval) {
+  return Boolean(route.assignedVehicle && route.assignedDriver);
+}
+
+function isAssignedRoute(routeId: number) {
+  try {
+    const isAssigned = isRouteAssign(routeId);
+    console.log(isAssigned)
+    return isAssigned
+
+  } catch (e) {
+    return false
+  }
+
+}
+
+function getStatusFilterCount(
+  items: RouteRequestApproval[],
+  status: StatusFilter,
+) {
+  if (status === "all") return items.length;
+
+  return items.filter((item) => normalizeStatus(item.status) === status).length;
+}
+
 export function RouteRequestApprovalsPage({
   approvals,
 }: {
@@ -124,6 +189,18 @@ export function RouteRequestApprovalsPage({
 }) {
   const [items, setItems] = useState(approvals);
   const [selectedId, setSelectedId] = useState(approvals[0]?.id ?? null);
+
+  const [assignedRoutes, setAssignedRoutes] = useState<Record<number, boolean>>({});
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [shiftFilter, setShiftFilter] = useState("all");
+  const [assignmentFilter, setAssignmentFilter] =
+    useState<AssignmentFilter>("all");
+  const [stopFilter, setStopFilter] = useState<StopFilter>("all");
+  const [sortFilter, setSortFilter] = useState<SortFilter>("newest");
+
   const [rejectionRoute, setRejectionRoute] =
     useState<RouteRequestApproval | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -132,10 +209,135 @@ export function RouteRequestApprovalsPage({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+
+
+  useEffect(() => {
+    async function loadAssignmentStatuses() {
+      setAssignmentLoading(true);
+
+      try {
+        const results = await Promise.all(
+          items.map(async (item) => {
+            const isAssigned = await isRouteAssign(item.routeId);
+            return [item.routeId, isAssigned] as const;
+          }),
+        );
+
+        setAssignedRoutes(Object.fromEntries(results));
+      } catch (error) {
+        console.log("Rota atama durumları alınırken hata oluştu", error);
+      } finally {
+        setAssignmentLoading(false);
+      }
+    }
+
+    if (items.length > 0) {
+      loadAssignmentStatuses();
+    }
+  }, [items]);
+
+  const shiftOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        items
+          .map((item) => item.shiftType)
+          .filter((shiftType): shiftType is string => Boolean(shiftType)),
+      ),
+    );
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase("tr-TR");
+
+    return items
+      .filter((item) => {
+        const matchesSearch = normalizedSearch
+          ? getSearchText(item).includes(normalizedSearch)
+          : true;
+
+        const matchesStatus =
+          statusFilter === "all"
+            ? true
+            : normalizeStatus(item.status) === statusFilter;
+
+        const matchesShift =
+          shiftFilter === "all" ? true : item.shiftType === shiftFilter;
+
+        const matchesAssignment =
+          assignmentFilter === "all"
+            ? true
+            : assignmentFilter === "assigned"
+              ? hasVehicleAndDriver(item)
+              : !hasVehicleAndDriver(item);
+
+        const stopCount = getStopCount(item) ?? 0;
+        const matchesStop =
+          stopFilter === "all"
+            ? true
+            : stopFilter === "withStops"
+              ? stopCount > 0
+              : stopCount === 0;
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesShift &&
+          matchesAssignment &&
+          matchesStop
+        );
+      })
+      .sort((first, second) => {
+        if (sortFilter === "oldest") {
+          return first.id - second.id;
+        }
+
+        if (sortFilter === "routeAsc") {
+          return String(first.routeName ?? "").localeCompare(
+            String(second.routeName ?? ""),
+            "tr",
+          );
+        }
+
+        if (sortFilter === "clientAsc") {
+          return String(first.clientName ?? "").localeCompare(
+            String(second.clientName ?? ""),
+            "tr",
+          );
+        }
+
+        return second.id - first.id;
+      });
+  }, [
+    items,
+    searchTerm,
+    statusFilter,
+    shiftFilter,
+    assignmentFilter,
+    stopFilter,
+    sortFilter,
+  ]);
+
   const selected = useMemo(
     () => items.find((approval) => approval.id === selectedId) ?? items[0],
     [items, selectedId],
   );
+
+  const hasActiveFilters =
+    searchTerm ||
+    statusFilter !== "all" ||
+    shiftFilter !== "all" ||
+    assignmentFilter !== "all" ||
+    stopFilter !== "all" ||
+    sortFilter !== "newest";
+
+  function clearFilters() {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setShiftFilter("all");
+    setAssignmentFilter("all");
+    setStopFilter("all");
+    setSortFilter("newest");
+  }
 
   function openRejection(route: RouteRequestApproval) {
     setError(null);
@@ -167,12 +369,12 @@ export function RouteRequestApprovalsPage({
         current.map((item) =>
           item.id === rejectionRoute.id
             ? {
-                ...item,
-                comments: trimmedReason,
-                decisionNote: trimmedReason,
-                rejectionReason: trimmedReason,
-                status: "Rejected",
-              }
+              ...item,
+              comments: trimmedReason,
+              decisionNote: trimmedReason,
+              rejectionReason: trimmedReason,
+              status: "Rejected",
+            }
             : item,
         ),
       );
@@ -201,9 +403,9 @@ export function RouteRequestApprovalsPage({
         current.map((item) =>
           item.id === route.id
             ? {
-                ...item,
-                status: "Approved",
-              }
+              ...item,
+              status: "Approved",
+            }
             : item,
         ),
       );
@@ -218,6 +420,8 @@ export function RouteRequestApprovalsPage({
       setIsSubmitting(false);
     }
   }
+
+
 
   return (
     <>
@@ -270,6 +474,156 @@ export function RouteRequestApprovalsPage({
             searchPlaceholder="Musteri veya rota ara..."
             title="Onay Kuyrugu"
           >
+            <div className="border-b border-slate-200 bg-white px-5 py-4">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="relative w-full xl:max-w-md">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Rota, musteri, durak, calisan, arac veya sofor ara..."
+                      value={searchTerm}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                      <Filter className="h-4 w-4" />
+                      {filteredItems.length} / {items.length} sonuc
+                    </div>
+
+                    {hasActiveFilters ? (
+                      <button
+                        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                        onClick={clearFilters}
+                        type="button"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        Temizle
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      label: "Tum Talepler",
+                      value: "all",
+                      count: getStatusFilterCount(items, "all"),
+                    },
+                    {
+                      label: "Bekleyen",
+                      value: "requested",
+                      count: getStatusFilterCount(items, "requested"),
+                    },
+                    {
+                      label: "Onaylanan",
+                      value: "approved",
+                      count: getStatusFilterCount(items, "approved"),
+                    },
+                    {
+                      label: "Reddedilen",
+                      value: "rejected",
+                      count: getStatusFilterCount(items, "rejected"),
+                    },
+                  ].map((filter) => (
+                    <button
+                      className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${statusFilter === filter.value
+                        ? "border-teal-200 bg-teal-50 text-teal-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      key={filter.value}
+                      onClick={() =>
+                        setStatusFilter(filter.value as StatusFilter)
+                      }
+                      type="button"
+                    >
+                      {filter.label}
+                      <span className="ml-2 rounded-full bg-white/80 px-2 py-0.5 text-xs">
+                        {filter.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">
+                      Vardiya
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      onChange={(event) => setShiftFilter(event.target.value)}
+                      value={shiftFilter}
+                    >
+                      <option value="all">Tum vardiyalar</option>
+                      {shiftOptions.map((shiftType) => (
+                        <option key={shiftType} value={shiftType}>
+                          {shiftType}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">
+                      Atama
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      onChange={(event) =>
+                        setAssignmentFilter(
+                          event.target.value as AssignmentFilter,
+                        )
+                      }
+                      value={assignmentFilter}
+                    >
+                      <option value="all">Tum atamalar</option>
+                      <option value="assigned">Arac ve sofor atanmis</option>
+                      <option value="missing">Atama bekleyen</option>
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">
+                      Durak detayi
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      onChange={(event) =>
+                        setStopFilter(event.target.value as StopFilter)
+                      }
+                      value={stopFilter}
+                    >
+                      <option value="all">Tum rotalar</option>
+                      <option value="withStops">Durak detayi olanlar</option>
+                      <option value="withoutStops">Durak detayi olmayanlar</option>
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">
+                      Siralama
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      onChange={(event) =>
+                        setSortFilter(event.target.value as SortFilter)
+                      }
+                      value={sortFilter}
+                    >
+                      <option value="newest">En yeni talep</option>
+                      <option value="oldest">En eski talep</option>
+                      <option value="routeAsc">Rota adina gore</option>
+                      <option value="clientAsc">Musteri adina gore</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <table className="w-full min-w-[1100px] border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70">
@@ -294,70 +648,122 @@ export function RouteRequestApprovalsPage({
                 </tr>
               </thead>
               <tbody>
-                {items.map((approval) => (
-                  <tr
-                    className="border-b border-slate-100 last:border-0"
-                    key={approval.id}
-                  >
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-950">
-                        {approval.routeName}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {approval.clientName || `Client #${approval.clientId ?? "-"}`}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-700">
-                      <p>{approval.shiftType || "-"}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {approval.operatingDays || "-"} /{" "}
-                        {approval.plannedStartTime || "-"}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-700">
-                      <p>{formatRouteScope(approval)}</p>
-                      <p className="mt-1 max-w-[340px] truncate text-xs text-slate-500">
-                        {formatStopPreview(approval)}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-700">
-                      <p>{approval.assignedVehicle ?? "Arac bekliyor"}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {approval.assignedDriver ?? "Sofor bekliyor"}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge status={approval.status || "Requested"} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          onClick={() => setSelectedId(approval.id)}
-                          size="icon"
-                          variant="secondary"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          disabled={isSubmitting}
-                          onClick={() => handleApprove(approval)}
-                          size="icon"
-                          variant="success"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          disabled={isSubmitting}
-                          onClick={() => openRejection(approval)}
-                          size="icon"
-                          variant="danger"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                {filteredItems.length ? (
+                  filteredItems.map((approval) => (
+                    <tr
+                      className={`border-b border-slate-100 last:border-0 ${selectedId === approval.id ? "bg-teal-50/40" : ""
+                        }`}
+                      key={approval.id}
+                    >
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-slate-950">
+                          {approval.routeName}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {approval.clientName ||
+                            `Client #${approval.clientId ?? "-"}`}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-700">
+                        <p>{approval.shiftType || "-"}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {approval.operatingDays || "-"} /{" "}
+                          {approval.plannedStartTime || "-"}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-700">
+                        <p>{formatRouteScope(approval)}</p>
+                        <p className="mt-1 max-w-[340px] truncate text-xs text-slate-500">
+                          {formatStopPreview(approval)}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-700">
+                        {assignmentLoading ? (
+                          <>
+                            <p>Kontrol ediliyor...</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Rota atama durumu sorgulanıyor
+                            </p>
+                          </>
+                        ) : assignedRoutes[approval.routeId] ? (
+                          <>
+                            <p className="font-semibold text-emerald-700">
+                              Araç ve şoför ataması yapılmış
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Bu rota sefere atanmış
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-semibold text-amber-700">
+                              Araç ve şoför ataması bekliyor
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Bu rota henüz sefere atanmamış
+                            </p>
+                          </>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <StatusBadge status={approval.status || "Requested"} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            onClick={() => setSelectedId(approval.id)}
+                            size="icon"
+                            variant="secondary"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            disabled={isSubmitting}
+                            onClick={() => handleApprove(approval)}
+                            size="icon"
+                            variant="success"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            disabled={isSubmitting}
+                            onClick={() => openRejection(approval)}
+                            size="icon"
+                            variant="danger"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="px-5 py-12 text-center" colSpan={6}>
+                      <div className="mx-auto max-w-md">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                          <Search className="h-5 w-5" />
+                        </div>
+                        <h3 className="mt-4 font-semibold text-slate-950">
+                          Sonuc bulunamadi
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Arama metnini veya filtreleri degistirerek tekrar
+                          deneyebilirsin.
+                        </p>
+                        {hasActiveFilters ? (
+                          <button
+                            className="mt-4 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                            onClick={clearFilters}
+                            type="button"
+                          >
+                            Filtreleri temizle
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </TableShell>
@@ -373,7 +779,8 @@ export function RouteRequestApprovalsPage({
                     {selected.routeName}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {selected.clientName || `Client #${selected.clientId ?? "-"}`}
+                    {selected.clientName ||
+                      `Client #${selected.clientId ?? "-"}`}
                   </p>
                 </div>
                 <StatusBadge status={selected.status || "Requested"} />
@@ -520,7 +927,7 @@ export function RouteRequestApprovalsPage({
           </div>
         </form>
       </Modal>
-
     </>
   );
 }
+

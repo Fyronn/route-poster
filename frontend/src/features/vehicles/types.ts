@@ -9,3 +9,13 @@ export type Vehicle = {
   equipmentFeatures?: string | null;
   isActive?: boolean | null;
 };
+
+export type VehicleUpdateDto = {
+  plateNumber?:string,
+  capacity?:number,
+  brandModel?:string,
+  productionYear?:number,
+  vehicleType?:string,
+  equipmentFeatures?:string,
+  isActive?:boolean
+}
