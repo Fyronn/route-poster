@@ -73,6 +73,33 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
+        public async Task UpdateAsync(int id, UpdateStopRequestDto dto)
+        {
+            var entity = await _stopRequestRepository.GetByIdAsync(id);
+            if (entity == null) return;
+
+            if (!string.IsNullOrEmpty(dto.StopName)) entity.StopName = dto.StopName;
+            if (dto.Address != null) entity.Address = dto.Address;
+            if (dto.Latitude.HasValue) entity.Latitude = dto.Latitude.Value;
+            if (dto.Longitude.HasValue) entity.Longitude = dto.Longitude.Value;
+            if (dto.OperatorNote != null) entity.OperatorNote = dto.OperatorNote;
+            if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive;
+            if (!string.IsNullOrEmpty(dto.Status)) entity.Status = dto.Status;
+
+            _stopRequestRepository.Update(entity);
+            await _stopRequestRepository.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await _stopRequestRepository.GetByIdAsync(id);
+            if (entity != null)
+            {
+                _stopRequestRepository.Remove(entity);
+                await _stopRequestRepository.SaveChangesAsync();
+            }
+        }
+
         private StopRequestDto MapToDto(Tblstop entity)
         {
             var firstRouteStop = entity.TblrouteStops?.FirstOrDefault();

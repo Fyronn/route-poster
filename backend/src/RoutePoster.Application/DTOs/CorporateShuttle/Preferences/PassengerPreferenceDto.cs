@@ -15,6 +15,7 @@ public class PassengerPreferenceDto
     public int? DropoffStopId { get; set; }
     public string? DropoffStopName { get; set; }
     public string? DropoffStopAddress { get; set; }
+    public string? LastStopName { get; set; }
     public bool IsTemporary { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }

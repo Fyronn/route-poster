@@ -69,7 +69,9 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
         // 2. Fetch all active temporary preferences
         var temps = await _tempPreferenceRepo.GetActiveWithDetailsByPassengerIdAsync(passengerId);
-        var activeTemps = temps.Where(p => date >= p.StartDate && date <= p.EndDate).ToList();
+        var activeTemps = temps.Where(p => date >= p.StartDate && date <= p.EndDate)
+                               .OrderByDescending(p => p.CreatedAt ?? DateTime.MinValue)
+                               .ToList();
 
         // 3. Keep track of route IDs we processed
         var processedRouteIds = new HashSet<int>();
@@ -77,7 +79,11 @@ public class PassengerPreferenceService : IPassengerPreferenceService
         // 4. Match and map
         foreach (var temp in activeTemps)
         {
-            processedRouteIds.Add(temp.RouteId);
+            if (!processedRouteIds.Add(temp.RouteId))
+            {
+                continue; // Skip older overlapping records
+            }
+
             resultList.Add(new PassengerPreferenceDto
             {
                 Id = temp.Id,
@@ -89,6 +95,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 DropoffStopId = temp.DropoffStopId,
                 DropoffStopName = temp.DropoffStop?.StopName,
                 DropoffStopAddress = temp.DropoffStop?.Address,
+                LastStopName = temp.Route?.TblrouteStops?.OrderByDescending(rs => rs.StopOrder).FirstOrDefault()?.Stop?.StopName,
                 IsTemporary = true,
                 StartDate = temp.StartDate,
                 EndDate = temp.EndDate,
@@ -120,6 +127,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
                 DropoffStopId = def.DropoffStopId,
                 DropoffStopName = def.DropoffStop?.StopName,
                 DropoffStopAddress = def.DropoffStop?.Address,
+                LastStopName = def.Route?.TblrouteStops?.OrderByDescending(rs => rs.StopOrder).FirstOrDefault()?.Stop?.StopName,
                 IsTemporary = false,
                 Stops = def.Route?.TblrouteStops?
                     .Select(rs => new RouteStopDto
@@ -174,7 +182,7 @@ public class PassengerPreferenceService : IPassengerPreferenceService
         var currentDate = dto.StartDate;
         while (currentDate <= dto.EndDate)
         {
-            var alreadyExists = await _absenceRepo.IsAbsentAsync(dto.PassengerId, currentDate);
+            var alreadyExists = await _absenceRepo.IsAbsentForRouteAsync(dto.PassengerId, dto.RouteId, currentDate);
             if (!alreadyExists)
             {
                 await _absenceRepo.AddAsync(new TblpassengerAbsence
@@ -222,95 +230,108 @@ public class PassengerPreferenceService : IPassengerPreferenceService
 
     public async Task AddTemporaryPreferenceAsync(int passengerId, CreateTemporaryPreferenceDto dto)
     {
-        int pickupStopId = dto.PickupStopId ?? 0;
+        int? pickupStopId = dto.PickupStopId;
         int? dropoffStopId = dto.DropoffStopId;
-
-        // If either pickup or dropoff stop is not provided, try to fallback to the default preference
-        if (dto.PickupStopId == null || dto.DropoffStopId == null)
-        {
-            var defaultPref = await _preferenceRepo.GetDefaultWithDetailsAsync(passengerId);
-            if (defaultPref != null)
-            {
-                if (dto.PickupStopId == null)
-                {
-                    pickupStopId = defaultPref.PickupStopId ?? 0;
-                }
-                if (dto.DropoffStopId == null)
-                {
-                    dropoffStopId = defaultPref.DropoffStopId;
-                }
-            }
-        }
-
-        if (pickupStopId == 0)
-        {
-            throw new System.ArgumentException("A pickup stop must be provided either as a parameter or exist as a default preference.");
-        }
 
         var newStart = dto.StartDate;
         var newEnd = dto.EndDate;
 
-        // Fetch all active temporary preferences for this passenger, route, and same stops
-        var sameStopsList = await _tempPreferenceRepo.FindAsync(p =>
+        // Fetch ALL active temporary preferences for this passenger and route
+        var existingList = await _tempPreferenceRepo.FindAsync(p =>
             p.PassengerId == passengerId &&
             p.RouteId == dto.RouteId &&
-            p.PickupStopId == pickupStopId &&
-            p.DropoffStopId == dropoffStopId &&
             (p.IsActive ?? true));
 
-        // Find all records that overlap or are exactly adjacent to the new date range
-        var overlappingOrAdjacent = sameStopsList.Where(p =>
-            !(p.StartDate > newEnd.AddDays(1) || p.EndDate < newStart.AddDays(-1))
-        ).ToList();
-
-        if (overlappingOrAdjacent.Any())
+        foreach (var existing in existingList)
         {
-            // Calculate the overall merged start and end date
-            var minStart = newStart;
-            var maxEnd = newEnd;
+            bool hasSameStops = existing.PickupStopId == pickupStopId && existing.DropoffStopId == dropoffStopId;
+            bool isOverlapping = !(existing.StartDate > newEnd || existing.EndDate < newStart);
+            bool isAdjacent = existing.EndDate == newStart.AddDays(-1) || existing.StartDate == newEnd.AddDays(1);
 
-            foreach (var record in overlappingOrAdjacent)
+            if (hasSameStops && (isOverlapping || isAdjacent))
             {
-                if (record.StartDate < minStart) minStart = record.StartDate;
-                if (record.EndDate > maxEnd) maxEnd = record.EndDate;
+                // We can absorb this into our new range and deactivate the old one
+                if (existing.StartDate < newStart) newStart = existing.StartDate;
+                if (existing.EndDate > newEnd) newEnd = existing.EndDate;
+
+                existing.IsActive = false;
+                existing.UpdatedAt = DateTime.UtcNow;
+                _tempPreferenceRepo.Update(existing);
             }
-
-            // Keep the first record as the main one, update its date range and details
-            var mainRecord = overlappingOrAdjacent.First();
-            mainRecord.StartDate = minStart;
-            mainRecord.EndDate = maxEnd;
-            if (!string.IsNullOrEmpty(dto.Description))
+            else if (isOverlapping) // different stops, but overlaps
             {
-                mainRecord.Description = dto.Description;
-            }
-            mainRecord.UpdatedAt = DateTime.UtcNow;
-            _tempPreferenceRepo.Update(mainRecord);
+                // We need to split or shrink the existing record
+                if (existing.StartDate < newStart && existing.EndDate > newEnd)
+                {
+                    // Split into two
+                    var left = new TblpassengerTemporaryPreference
+                    {
+                        PassengerId = existing.PassengerId,
+                        RouteId = existing.RouteId,
+                        PickupStopId = existing.PickupStopId,
+                        DropoffStopId = existing.DropoffStopId,
+                        StartDate = existing.StartDate,
+                        EndDate = newStart.AddDays(-1),
+                        Description = existing.Description,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    var right = new TblpassengerTemporaryPreference
+                    {
+                        PassengerId = existing.PassengerId,
+                        RouteId = existing.RouteId,
+                        PickupStopId = existing.PickupStopId,
+                        DropoffStopId = existing.DropoffStopId,
+                        StartDate = newEnd.AddDays(1),
+                        EndDate = existing.EndDate,
+                        Description = existing.Description,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _tempPreferenceRepo.AddAsync(left);
+                    await _tempPreferenceRepo.AddAsync(right);
 
-            // Deactivate all other overlapping/adjacent records to avoid duplicates
-            foreach (var record in overlappingOrAdjacent.Skip(1))
-            {
-                record.IsActive = false;
-                record.UpdatedAt = DateTime.UtcNow;
-                _tempPreferenceRepo.Update(record);
+                    existing.IsActive = false;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    _tempPreferenceRepo.Update(existing);
+                }
+                else if (existing.StartDate >= newStart && existing.EndDate <= newEnd)
+                {
+                    // Fully covered by new record, just deactivate
+                    existing.IsActive = false;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    _tempPreferenceRepo.Update(existing);
+                }
+                else if (existing.StartDate < newStart && existing.EndDate >= newStart)
+                {
+                    // Overlaps on the left
+                    existing.EndDate = newStart.AddDays(-1);
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    _tempPreferenceRepo.Update(existing);
+                }
+                else if (existing.StartDate <= newEnd && existing.EndDate > newEnd)
+                {
+                    // Overlaps on the right
+                    existing.StartDate = newEnd.AddDays(1);
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    _tempPreferenceRepo.Update(existing);
+                }
             }
         }
-        else
+
+        var entity = new TblpassengerTemporaryPreference
         {
-            // No overlaps/adjacency found for the same stops, insert a new record
-            var entity = new TblpassengerTemporaryPreference
-            {
-                PassengerId = passengerId,
-                RouteId = dto.RouteId,
-                PickupStopId = pickupStopId,
-                DropoffStopId = dropoffStopId,
-                StartDate = newStart,
-                EndDate = newEnd,
-                Description = dto.Description,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-            await _tempPreferenceRepo.AddAsync(entity);
-        }
+            PassengerId = passengerId,
+            RouteId = dto.RouteId,
+            PickupStopId = pickupStopId,
+            DropoffStopId = dropoffStopId,
+            StartDate = newStart,
+            EndDate = newEnd,
+            Description = dto.Description,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _tempPreferenceRepo.AddAsync(entity);
 
         await _tempPreferenceRepo.SaveChangesAsync();
     }

@@ -82,4 +82,9 @@ public class PassengerAbsenceRepository : GenericRepository<TblpassengerAbsence>
     {
         return await _dbSet.AnyAsync(p => p.PassengerId == passengerId && p.AbsenceDate == date);
     }
+
+    public async Task<bool> IsAbsentForRouteAsync(int passengerId, int routeId, DateOnly date)
+    {
+        return await _dbSet.AnyAsync(p => p.PassengerId == passengerId && p.RouteId == routeId && p.AbsenceDate == date);
+    }
 }

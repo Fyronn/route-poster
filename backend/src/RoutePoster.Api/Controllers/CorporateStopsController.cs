@@ -31,5 +31,19 @@ namespace RoutePoster.Api.Controllers
             var createdStop = await _stopRequestService.CreateAsync(dto);
             return Ok(createdStop);
         }
+
+        [HttpPut("{stopId}")]
+        public async Task<IActionResult> Update(int clientId, int stopId, [FromBody] UpdateStopRequestDto dto)
+        {
+            await _stopRequestService.UpdateAsync(stopId, dto);
+            return NoContent();
+        }
+
+        [HttpDelete("{stopId}")]
+        public async Task<IActionResult> Delete(int clientId, int stopId)
+        {
+            await _stopRequestService.DeleteAsync(stopId);
+            return NoContent();
+        }
     }
 }
