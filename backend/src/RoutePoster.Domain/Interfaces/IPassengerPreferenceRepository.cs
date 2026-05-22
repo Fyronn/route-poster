@@ -23,4 +23,5 @@ public interface IPassengerAbsenceRepository : IGenericRepository<TblpassengerAb
     Task<IEnumerable<TblpassengerAbsence>> GetByPassengerIdAsync(int passengerId);
     Task<IEnumerable<TblpassengerAbsence>> GetWithDetailsByPassengerIdAsync(int passengerId);
     Task<bool> IsAbsentAsync(int passengerId, DateOnly date);
+    Task<bool> IsAbsentForRouteAsync(int passengerId, int routeId, DateOnly date);
 }

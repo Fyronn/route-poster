@@ -9,5 +9,7 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<IEnumerable<StopRequestDto>> GetByClientIdAsync(int clientId);
         Task<StopRequestDto?> GetByIdAsync(int id);
         Task<StopRequestDto> CreateAsync(CreateStopRequestDto dto);
+        Task UpdateAsync(int id, UpdateStopRequestDto dto);
+        Task DeleteAsync(int id);
     }
 }

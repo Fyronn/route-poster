@@ -44,7 +44,7 @@ namespace RoutePoster.Application.Services
                 LastName = dto.LastName,
                 Email = dto.Email,
                 Phone = dto.Phone,
-                PasswordHash = dto.PasswordHash ?? "default_hash", 
+                PasswordHash = !string.IsNullOrEmpty(dto.Password) ? BCrypt.Net.BCrypt.HashPassword(dto.Password) : "default_hash", 
                 IsActive = dto.IsActive ?? true,
                 CreatedAt = DateTime.UtcNow
             };
