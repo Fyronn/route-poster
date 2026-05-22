@@ -33,6 +33,8 @@ public partial class Tblroute
 
     public int? CreatedBy { get; set; }
 
+    public string? RejectionReason { get; set; }
+
     public virtual Tblclient Client { get; set; } = null!;
 
     public virtual ICollection<TblpassengerAbsence> TblpassengerAbsences { get; set; } = new List<TblpassengerAbsence>();

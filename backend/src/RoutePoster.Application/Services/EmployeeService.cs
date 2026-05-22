@@ -52,6 +52,36 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
+        public async Task<EmployeeDto?> UpdateAsync(int id, UpdateEmployeeDto dto)
+        {
+            var entity = await _employeeRepository.GetByIdAsync(id);
+            if (entity == null) return null;
+
+            if (dto.FirstName != null) entity.FirstName = dto.FirstName;
+            if (dto.LastName != null) entity.LastName = dto.LastName;
+            if (dto.Email != null) entity.Email = dto.Email;
+            if (dto.Phone != null) entity.Phone = dto.Phone;
+            if (dto.IdentityNumber != null) entity.IdentityNumber = dto.IdentityNumber;
+            if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
+
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            _employeeRepository.Update(entity);
+            await _employeeRepository.SaveChangesAsync();
+
+            return MapToDto(entity);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _employeeRepository.GetByIdAsync(id);
+            if (entity == null) return false;
+
+            _employeeRepository.Remove(entity);
+            await _employeeRepository.SaveChangesAsync();
+            return true;
+        }
+
         private EmployeeDto MapToDto(Tbluser entity)
         {
             return new EmployeeDto

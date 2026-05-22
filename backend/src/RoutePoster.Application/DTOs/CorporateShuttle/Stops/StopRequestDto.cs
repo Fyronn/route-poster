@@ -11,5 +11,7 @@ namespace RoutePoster.Application.DTOs.CorporateShuttle.Stops
         public string? Status { get; set; } // "Requested", "Approved"
         public string? OperatorNote { get; set; }
         public bool? IsActive { get; set; }
+        public int? RouteId { get; set; }
+        public string? RouteName { get; set; }
     }
 }

@@ -6,5 +6,6 @@ namespace RoutePoster.Domain.Interfaces
     {
         Task<IEnumerable<Tblroute>> GetAllWithDetailsAsync();
         Task<IEnumerable<Tblroute>> GetByClientIdWithDetailsAsync(int clientId);
+        Task<Tblroute?> GetByIdWithDetailsAsync(int id);
     }
 }

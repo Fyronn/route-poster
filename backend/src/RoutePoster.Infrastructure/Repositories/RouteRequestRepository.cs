@@ -29,5 +29,13 @@ namespace RoutePoster.Infrastructure.Repositories
                 .Include(r => r.TblpassengerRoutePreferences).ThenInclude(pr => pr.Passenger)
                 .ToListAsync();
         }
+
+        public async Task<Tblroute?> GetByIdWithDetailsAsync(int id)
+        {
+            return await _context.Tblroutes
+                .Include(r => r.TblrouteStops).ThenInclude(rs => rs.Stop)
+                .Include(r => r.TblpassengerRoutePreferences).ThenInclude(pr => pr.Passenger)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
     }
 }

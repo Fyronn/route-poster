@@ -8,4 +8,8 @@ public class RegisterRequestDto
     public string Password { get; set; } = null!;
     public int? RoleId { get; set; }
     public int? ClientId { get; set; }
+    public int? TransportCompanyId { get; set; }
+    public int? DepartmentId { get; set; }
+    public string? IdentityNumber { get; set; }
+    public string? Phone { get; set; }
 }

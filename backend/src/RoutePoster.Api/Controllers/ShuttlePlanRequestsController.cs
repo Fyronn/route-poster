@@ -22,7 +22,7 @@ namespace RoutePoster.Api.Controllers
         public async Task<IActionResult> UpdateRouteStatus(int routeId, [FromBody] UpdateShuttlePlanStatusDto dto)
         {
             // ABC Tourism admin approves or rejects the incoming routes.
-            await _routeRequestService.UpdateStatusAsync(routeId, dto.Status);
+            await _routeRequestService.UpdateStatusAsync(routeId, dto.Status, dto.RejectedReason);
             return Ok(new { Message = $"Route status updated to '{dto.Status}'." });
         }
         [HttpGet]
