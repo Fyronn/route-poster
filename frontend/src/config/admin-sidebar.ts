@@ -69,5 +69,12 @@ export const adminSidebarItems: AdminSidebarItem[] = [
     href: "/admin/route-request-approvals",
     icon: "check-square",
     roles: ["admin"],
+  },
+  {
+    label: "Durak Onayları",
+    href: "/admin/stop-requests",
+    icon: "map-pin",
+    roles: ["admin"],
   }
 ];
+

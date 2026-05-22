@@ -70,7 +70,7 @@ export async function createDriver(payload: {
     email: payload.email,
     phone: payload.phone,
     identityNumber: payload.identityNumber,
-    passwordHash: payload.password,
+    password: payload.password,
     isActive: true,
   });
 
