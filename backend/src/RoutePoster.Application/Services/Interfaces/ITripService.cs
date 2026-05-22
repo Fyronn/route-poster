@@ -11,5 +11,6 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<TripDto> CreateAsync(CreateTripDto dto);
         Task<TripDto?> StartTripAsync(int tripId, int driverId);
         Task<TripDto?> EndTripAsync(int tripId, int driverId);
+        Task<TripAssignmentStatusDto> CheckAssignmentStatusByRouteIdAsync(int routeId);
     }
 }

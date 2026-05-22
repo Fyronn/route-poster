@@ -68,5 +68,11 @@ namespace RoutePoster.Api.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet("route/{routeId}/assignment-status")]
+        public async Task<ActionResult<TripAssignmentStatusDto>> GetAssignmentStatusByRouteId(int routeId)
+        {
+            var result = await _tripService.CheckAssignmentStatusByRouteIdAsync(routeId);
+            return Ok(result);
+        }
     }
 }

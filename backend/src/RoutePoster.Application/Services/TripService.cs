@@ -105,5 +105,21 @@ namespace RoutePoster.Application.Services
 
             return MapToDto(entity);
         }
+
+        public async Task<TripAssignmentStatusDto> CheckAssignmentStatusByRouteIdAsync(int routeId)
+        {
+            var trips = await _tripRepository.FindAsync(t => t.RouteId == routeId);
+            var latestTrip = trips.OrderByDescending(t => t.Id).FirstOrDefault();
+
+            if (latestTrip == null)
+            {
+                return new TripAssignmentStatusDto { IsAssigned = false, TripId = null };
+            }
+
+            var assignments = await _tripAssignmentRepository.FindAsync(ta => ta.TripId == latestTrip.Id);
+            bool isAssigned = assignments.Any();
+
+            return new TripAssignmentStatusDto { IsAssigned = isAssigned, TripId = latestTrip.Id };
+        }
     }
 }
