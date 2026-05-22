@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,10 +12,12 @@ namespace RoutePoster.Application.Services
     public class TripService : ITripService
     {
         private readonly ITripRepository _tripRepository;
+        private readonly ITripAssignmentRepository _tripAssignmentRepository;
 
-        public TripService(ITripRepository tripRepository)
+        public TripService(ITripRepository tripRepository, ITripAssignmentRepository tripAssignmentRepository)
         {
             _tripRepository = tripRepository;
+            _tripAssignmentRepository = tripAssignmentRepository;
         }
 
         public async Task<IEnumerable<TripDto>> GetAllAsync()
@@ -57,6 +60,50 @@ namespace RoutePoster.Application.Services
                 EndTime = entity.CompletedAt,
                 Status = entity.Status
             };
+        }
+
+        public async Task<TripDto?> StartTripAsync(int tripId, int driverId)
+        {
+            var entity = await _tripRepository.GetByIdAsync(tripId);
+            if (entity == null) return null;
+
+            // Verify assignment
+            var assignments = await _tripAssignmentRepository.FindAsync(ta => ta.TripId == tripId && ta.DriverId == driverId);
+            if (!assignments.Any())
+            {
+                throw new InvalidOperationException("Driver is not assigned to this trip.");
+            }
+
+            entity.Status = "Started";
+            entity.StartedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            _tripRepository.Update(entity);
+            await _tripRepository.SaveChangesAsync();
+
+            return MapToDto(entity);
+        }
+
+        public async Task<TripDto?> EndTripAsync(int tripId, int driverId)
+        {
+            var entity = await _tripRepository.GetByIdAsync(tripId);
+            if (entity == null) return null;
+
+            // Verify assignment
+            var assignments = await _tripAssignmentRepository.FindAsync(ta => ta.TripId == tripId && ta.DriverId == driverId);
+            if (!assignments.Any())
+            {
+                throw new InvalidOperationException("Driver is not assigned to this trip.");
+            }
+
+            entity.Status = "Completed";
+            entity.CompletedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            _tripRepository.Update(entity);
+            await _tripRepository.SaveChangesAsync();
+
+            return MapToDto(entity);
         }
     }
 }

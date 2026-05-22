@@ -11,7 +11,7 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<IEnumerable<RouteRequestDto>> GetApprovedByClientIdAsync(int clientId);
         Task<RouteRequestDto?> GetByIdAsync(int id);
         Task<RouteRequestDto> CreateAsync(CreateRouteRequestDto dto);
-        Task UpdateStatusAsync(int id, string status);
+        Task UpdateStatusAsync(int id, string status, string? rejectedReason = null);
         Task<IEnumerable<RouteStopDto>?> GetRouteStopsAsync(int routeId);
     }
 }

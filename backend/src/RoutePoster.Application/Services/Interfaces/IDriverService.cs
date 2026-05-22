@@ -12,5 +12,6 @@ namespace RoutePoster.Application.Services.Interfaces
         Task UpdateAsync(int id, UpdateDriverDto dto);
         Task DeleteAsync(int id);
         Task<IEnumerable<DriverPlannedTripDto>> GetPlannedTripsForDriverAsync(int driverId);
+        Task<IEnumerable<DriverAssignedTripDto>> GetAssignedTripsForDriverAsync(int driverId, string? status = null);
     }
 }

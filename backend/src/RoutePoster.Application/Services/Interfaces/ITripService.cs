@@ -9,5 +9,7 @@ namespace RoutePoster.Application.Services.Interfaces
         Task<IEnumerable<TripDto>> GetAllAsync();
         Task<IEnumerable<TripDto>> GetByRouteIdAsync(int routeId);
         Task<TripDto> CreateAsync(CreateTripDto dto);
+        Task<TripDto?> StartTripAsync(int tripId, int driverId);
+        Task<TripDto?> EndTripAsync(int tripId, int driverId);
     }
 }

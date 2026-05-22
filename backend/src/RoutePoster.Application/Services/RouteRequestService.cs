@@ -106,12 +106,16 @@ namespace RoutePoster.Application.Services
             return MapToDto(entity);
         }
 
-        public async Task UpdateStatusAsync(int id, string status)
+        public async Task UpdateStatusAsync(int id, string status, string? rejectedReason = null)
         {
             var entity = await _routeRequestRepository.GetByIdAsync(id);
             if (entity != null)
             {
                 entity.Status = status;
+                if (!string.IsNullOrEmpty(rejectedReason))
+                {
+                    entity.RejectionReason = rejectedReason;
+                }
                 _routeRequestRepository.Update(entity);
                 await _routeRequestRepository.SaveChangesAsync();
             }
@@ -131,6 +135,7 @@ namespace RoutePoster.Application.Services
                 PlannedStartTime = entity.PlannedStartTime,
                 EstimatedDurationMinutes = entity.EstimatedDurationMinutes,
                 IsActive = entity.IsActive,
+                RejectionReason = entity.RejectionReason,
                 Stops = entity.TblrouteStops.Select(s => new RouteStopDto
                 {
                     StopId = s.StopId,

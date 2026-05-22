@@ -138,5 +138,48 @@ namespace RoutePoster.Application.Services
 
             return result;
         }
+
+        public async Task<IEnumerable<DriverAssignedTripDto>> GetAssignedTripsForDriverAsync(int driverId, string? status = null)
+        {
+            var assignments = await _tripAssignmentRepository.GetAssignmentsByDriverIdAsync(driverId, status);
+            
+            var result = new List<DriverAssignedTripDto>();
+            foreach (var assignment in assignments)
+            {
+                var trip = assignment.Trip;
+                if (trip == null) continue;
+
+                var route = trip.Route;
+                if (route == null) continue;
+
+                var tripDto = new DriverAssignedTripDto
+                {
+                    TripId = trip.Id,
+                    TripDate = trip.TripDate,
+                    Status = trip.Status,
+                    VehicleId = assignment.VehicleId,
+                    VehiclePlateNumber = assignment.Vehicle?.PlateNumber,
+                    RouteId = route.Id,
+                    RouteName = route.RouteName,
+                    PlannedStartTime = route.PlannedStartTime,
+                    Stops = route.TblrouteStops
+                        .Select(rs => new DriverAssignedTripStopDto
+                        {
+                            StopId = rs.StopId,
+                            StopName = rs.Stop?.StopName ?? "Bilinmeyen Durak",
+                            StopOrder = rs.StopOrder,
+                            TargetArrivalTime = rs.TargetArrivalTime,
+                            Latitude = rs.Stop?.Latitude,
+                            Longitude = rs.Stop?.Longitude
+                        })
+                        .OrderBy(s => s.StopOrder)
+                        .ToList()
+                };
+
+                result.Add(tripDto);
+            }
+
+            return result;
+        }
     }
 }

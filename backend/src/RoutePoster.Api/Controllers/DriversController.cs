@@ -59,5 +59,12 @@ namespace RoutePoster.Api.Controllers
             var trips = await _driverService.GetPlannedTripsForDriverAsync(id);
             return Ok(trips);
         }
+
+        [HttpGet("{id}/assigned-trips")]
+        public async Task<ActionResult<IEnumerable<DriverAssignedTripDto>>> GetAssignedTrips(int id, [FromQuery] string? status = null)
+        {
+            var trips = await _driverService.GetAssignedTripsForDriverAsync(id, status);
+            return Ok(trips);
+        }
     }
 }
